@@ -276,7 +276,9 @@ class TerminalTabBar {
     // Disable new terminal button if at max
     const newBtn = this.element.querySelector('.btn-new-terminal');
     newBtn.disabled = state.terminals.length >= this.manager.maxTerminals;
-    newBtn.title = newBtn.disabled ? 'Maximum terminals reached' : 'New Terminal (Ctrl+Shift+T)';
+    newBtn.title = newBtn.disabled
+      ? `Maximum terminals (${this.manager.maxTerminals}) reached for this project`
+      : 'New Terminal (Ctrl+Shift+T)';
   }
 
   _setupEventHandlers() {
