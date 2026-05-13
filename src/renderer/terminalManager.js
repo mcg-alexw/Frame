@@ -209,15 +209,20 @@ class TerminalManager {
    * @param {string} options.shell - Shell path to use (optional)
    */
   async createTerminal(options = {}) {
-    if (this.terminals.size >= this.maxTerminals) {
-      console.error('Maximum terminal limit reached');
-      return null;
-    }
-
     // Use provided projectPath or current project
     const projectPath = options.projectPath !== undefined
       ? options.projectPath
       : this.currentProjectPath;
+
+    // Per-project cap (was previously global — but terminals from other
+    // projects are kept alive in memory for fast switch-back, so a global
+    // count of 9 silently locked users out at far fewer visible terminals).
+    const projectCount = Array.from(this.terminals.values())
+      .filter(t => t.state.projectPath === projectPath).length;
+    if (projectCount >= this.maxTerminals) {
+      console.error(`Maximum terminal limit (${this.maxTerminals}) reached for this project`);
+      return null;
+    }
 
     // Working directory: use provided cwd, or project path, or home directory
     const workingDir = options.cwd || projectPath || null;

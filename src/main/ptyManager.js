@@ -127,8 +127,14 @@ function getAvailableShells() {
  * @returns {string} Terminal ID
  */
 function createTerminal(workingDir = null, projectPath = null, shellPath = null) {
-  if (ptyInstances.size >= MAX_TERMINALS) {
-    throw new Error(`Maximum terminal limit (${MAX_TERMINALS}) reached`);
+  // Per-project cap. The renderer keeps terminals from inactive projects
+  // alive in its Map for fast switch-back, so a global count would surface
+  // here as a confusing "you have 3 visible but can't open a 4th" because
+  // 6 hidden ones from a previous project are eating the global slot.
+  const projectCount = Array.from(ptyInstances.values())
+    .filter(p => p.projectPath === projectPath).length;
+  if (projectCount >= MAX_TERMINALS) {
+    throw new Error(`Maximum terminal limit (${MAX_TERMINALS}) reached for this project`);
   }
 
   const terminalId = `term-${++terminalCounter}`;
