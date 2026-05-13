@@ -1,0 +1,61 @@
+/* Sample Banner — top strip shown while the bundled sample project is open */
+
+.sample-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  background: var(--accent-subtle);
+  border-bottom: 1px solid var(--accent-primary);
+  padding: 8px 14px;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.sample-banner.visible {
+  display: flex;
+}
+
+.sample-banner-icon {
+  font-size: 14px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.sample-banner-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.sample-banner-text strong {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+/* Accent-colored × so it visually separates from the side-panel close
+   button that sits directly beneath it on the right edge. Frame's gold
+   makes it pop against the subtle banner background. */
+.sample-banner-close {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 4px 8px;
+  margin-right: 4px;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.12s, background 0.12s;
+}
+
+.sample-banner-close:hover {
+  color: var(--accent-secondary);
+  background: var(--accent-subtle);
+}
