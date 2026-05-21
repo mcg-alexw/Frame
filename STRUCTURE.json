@@ -2899,6 +2899,7 @@
         "shared/ipcChannels",
         "terminal",
         "fileTreeUI",
+        "gitChangesPanel",
         "historyPanel",
         "tasksPanel",
         "tasksDashboard",
@@ -2928,26 +2929,26 @@
       ],
       "functions": {
         "init": {
-          "line": 39,
+          "line": 40,
           "purpose": "Initialize all modules"
         },
         "setupButtonHandlers": {
-          "line": 193,
+          "line": 197,
           "purpose": "Setup button click handlers"
         },
         "setupUpdateDot": {
-          "line": 304,
+          "line": 308,
           "purpose": "→ About → \"Dismiss this version\"). Both click open Settings → About."
         },
         "revealSidebarTab": {
-          "line": 335,
+          "line": 339,
           "params": [
             "tabName"
           ],
           "purpose": "commands so they don't try to focus an element inside a hidden container."
         },
         "registerCommands": {
-          "line": 353,
+          "line": 357,
           "purpose": "Command Palette and the global keyboard handler."
         }
       },
@@ -5554,6 +5555,72 @@
         ],
         "emits": []
       }
+    },
+    "renderer/gitChangesPanel": {
+      "file": "src/renderer/gitChangesPanel.js",
+      "description": "Git Changes Panel (Changes sidebar tab)",
+      "exports": [
+        "init"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "init": {
+          "line": 21
+        },
+        "handleStatus": {
+          "line": 37,
+          "params": [
+            "payload"
+          ]
+        },
+        "showMessage": {
+          "line": 61,
+          "params": [
+            "text"
+          ]
+        },
+        "partition": {
+          "line": 72,
+          "params": [
+            "files"
+          ],
+          "purpose": "`staged` and `changes` (VSCode parity)."
+        },
+        "renderGroup": {
+          "line": 107,
+          "params": [
+            "group",
+            "entries"
+          ]
+        },
+        "buildRow": {
+          "line": 125,
+          "params": [
+            "entry"
+          ]
+        },
+        "badgeChar": {
+          "line": 154,
+          "params": [
+            "entry"
+          ]
+        },
+        "normalize": {
+          "line": 166,
+          "params": [
+            "ch"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "GIT_STATUS_DATA"
+        ],
+        "emits": []
+      }
     }
   },
   "ipcChannels": {
@@ -6254,6 +6321,13 @@
         "module": "main/gitBranchesManager",
         "file": "src/main/gitBranchesManager.js",
         "description": "Git Branches Manager Module"
+      }
+    ],
+    "git-changes": [
+      {
+        "module": "renderer/gitChangesPanel",
+        "file": "src/renderer/gitChangesPanel.js",
+        "description": "Git Changes Panel (Changes sidebar tab)"
       }
     ],
     "git-diff": [

@@ -1,0 +1,171 @@
+/**
+ * Git Changes Panel (Changes sidebar tab)
+ *
+ * Subscribes to `GIT_STATUS_DATA` (already pushed by gitStatusManager for the
+ * active project's file tree decoration) and renders the entries in VSCode-
+ * style buckets: Staged Changes / Changes / Merge Conflicts.
+ *
+ * Read-only — clicking a row will (in T09) open the Diff Viewer overlay.
+ */
+
+const { ipcRenderer } = require('electron');
+const { IPC } = require('../shared/ipcChannels');
+
+let emptyEl = null;
+let bodyEl = null;
+let sections = { staged: null, changes: null, conflict: null };
+let lists = { staged: null, changes: null, conflict: null };
+
+let currentProjectPath = null;
+
+function init() {
+  emptyEl = document.getElementById('git-changes-empty');
+  bodyEl = document.getElementById('git-changes-body');
+  if (!emptyEl || !bodyEl) return;
+
+  for (const group of ['staged', 'changes', 'conflict']) {
+    sections[group] = bodyEl.querySelector(`[data-git-changes-group="${group}"]`);
+    lists[group] = bodyEl.querySelector(`[data-git-changes-list="${group}"]`);
+  }
+
+  ipcRenderer.on(IPC.GIT_STATUS_DATA, (_event, payload) => {
+    if (!payload) return;
+    handleStatus(payload);
+  });
+}
+
+function handleStatus(payload) {
+  currentProjectPath = payload.projectPath || null;
+
+  if (!payload.isRepo) {
+    showMessage('Not a git repository');
+    return;
+  }
+
+  const buckets = partition(payload.files || {});
+  const total = buckets.staged.length + buckets.changes.length + buckets.conflict.length;
+
+  if (total === 0) {
+    showMessage('Working tree clean');
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  bodyEl.style.display = '';
+
+  renderGroup('staged', buckets.staged);
+  renderGroup('changes', buckets.changes);
+  renderGroup('conflict', buckets.conflict);
+}
+
+function showMessage(text) {
+  emptyEl.textContent = text;
+  emptyEl.style.display = '';
+  bodyEl.style.display = 'none';
+}
+
+/**
+ * Partition `{ [relPath]: { index, worktree, classification } }` into three
+ * buckets. A file with both staged and worktree changes appears in both
+ * `staged` and `changes` (VSCode parity).
+ */
+function partition(files) {
+  const staged = [];
+  const changes = [];
+  const conflict = [];
+
+  for (const [relPath, entry] of Object.entries(files)) {
+    const { index, worktree, classification } = entry;
+
+    if (classification === 'ignored') continue;
+
+    if (classification === 'conflict') {
+      conflict.push({ relPath, index, worktree, classification, group: 'conflict' });
+      continue;
+    }
+
+    // Staged: index char is something other than ' ' or '?'
+    if (index && index !== ' ' && index !== '?') {
+      staged.push({ relPath, index, worktree, classification, group: 'staged' });
+    }
+
+    // Working-tree changes or untracked
+    const isUntracked = index === '?' && worktree === '?';
+    if (isUntracked || worktree === 'M' || worktree === 'D' || worktree === 'A') {
+      changes.push({ relPath, index, worktree, classification, group: 'changes' });
+    }
+  }
+
+  const byPath = (a, b) => a.relPath.localeCompare(b.relPath);
+  staged.sort(byPath);
+  changes.sort(byPath);
+  conflict.sort(byPath);
+
+  return { staged, changes, conflict };
+}
+
+function renderGroup(group, entries) {
+  const sectionEl = sections[group];
+  const listEl = lists[group];
+  if (!sectionEl || !listEl) return;
+
+  if (entries.length === 0) {
+    sectionEl.style.display = 'none';
+    listEl.innerHTML = '';
+    return;
+  }
+
+  sectionEl.style.display = '';
+  listEl.innerHTML = '';
+  for (const entry of entries) {
+    listEl.appendChild(buildRow(entry));
+  }
+}
+
+function buildRow(entry) {
+  const row = document.createElement('div');
+  row.className = 'git-changes-row';
+  row.dataset.relpath = entry.relPath;
+  row.dataset.group = entry.group;
+
+  const lastSlash = entry.relPath.lastIndexOf('/');
+  const name = lastSlash >= 0 ? entry.relPath.slice(lastSlash + 1) : entry.relPath;
+  const dir = lastSlash >= 0 ? entry.relPath.slice(0, lastSlash) : '';
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'git-changes-row-name';
+  nameEl.textContent = name;
+
+  const dirEl = document.createElement('span');
+  dirEl.className = 'git-changes-row-dir';
+  dirEl.textContent = dir;
+
+  const badge = document.createElement('span');
+  badge.className = 'git-changes-row-badge';
+  const status = badgeChar(entry);
+  badge.dataset.status = status;
+  badge.textContent = status;
+
+  row.title = `${entry.relPath} (${entry.index || ' '}${entry.worktree || ' '})`;
+  row.append(nameEl, dirEl, badge);
+  return row;
+}
+
+function badgeChar(entry) {
+  if (entry.group === 'staged') {
+    return normalize(entry.index);
+  }
+  if (entry.group === 'conflict') {
+    return 'C';
+  }
+  // changes group
+  if (entry.index === '?' && entry.worktree === '?') return 'U';
+  return normalize(entry.worktree);
+}
+
+function normalize(ch) {
+  if (!ch || ch === ' ') return 'M';
+  return ch;
+}
+
+module.exports = { init };

@@ -81,5 +81,5 @@
 .git-changes-row-badge[data-status="A"] { color: var(--success); }
 .git-changes-row-badge[data-status="D"] { color: var(--error); }
 .git-changes-row-badge[data-status="R"] { color: var(--info); }
-.git-changes-row-badge[data-status="U"] { color: var(--error); }
-.git-changes-row-badge[data-status="?"] { color: var(--success); }
+.git-changes-row-badge[data-status="U"] { color: var(--success); }
+.git-changes-row-badge[data-status="C"] { color: var(--error); }
