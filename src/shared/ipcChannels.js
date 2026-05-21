@@ -134,6 +134,7 @@ const IPC = {
   WATCH_GIT_STATUS: 'watch-git-status',
   UNWATCH_GIT_STATUS: 'unwatch-git-status',
   GIT_STATUS_DATA: 'git-status-data',
+  GET_GIT_DIFF: 'get-git-diff',
 
   // Telemetry (Aptabase, opt-out via Settings)
   TELEMETRY_SET_ENABLED: 'telemetry-set-enabled',

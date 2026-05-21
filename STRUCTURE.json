@@ -731,7 +731,7 @@
           "purpose": "Format: \"XY <path>\\0\" with renamed/copied entries adding \"<oldpath>\\0\" after."
         },
         "classify": {
-          "line": 131,
+          "line": 135,
           "params": [
             "index",
             "worktree"
@@ -851,24 +851,25 @@
         "updateChecker",
         "userSettings",
         "gitStatusManager",
+        "gitDiffManager",
         "telemetry",
         "specManager"
       ],
       "functions": {
         "createWindow": {
-          "line": 39,
+          "line": 40,
           "purpose": "Create main application window"
         },
         "setupAllIPC": {
-          "line": 92,
+          "line": 93,
           "purpose": "Setup all IPC handlers"
         },
         "init": {
-          "line": 136,
+          "line": 140,
           "purpose": "Initialize application"
         },
         "initModulesWithWindow": {
-          "line": 155,
+          "line": 159,
           "params": [
             "window"
           ],
@@ -2898,6 +2899,8 @@
         "shared/ipcChannels",
         "terminal",
         "fileTreeUI",
+        "gitChangesPanel",
+        "diffViewer",
         "historyPanel",
         "tasksPanel",
         "tasksDashboard",
@@ -2927,26 +2930,26 @@
       ],
       "functions": {
         "init": {
-          "line": 39,
+          "line": 41,
           "purpose": "Initialize all modules"
         },
         "setupButtonHandlers": {
-          "line": 193,
+          "line": 207,
           "purpose": "Setup button click handlers"
         },
         "setupUpdateDot": {
-          "line": 304,
+          "line": 318,
           "purpose": "→ About → \"Dismiss this version\"). Both click open Settings → About."
         },
         "revealSidebarTab": {
-          "line": 335,
+          "line": 349,
           "params": [
             "tabName"
           ],
           "purpose": "commands so they don't try to focus an element inside a hidden container."
         },
         "registerCommands": {
-          "line": 353,
+          "line": 367,
           "purpose": "Command Palette and the global keyboard handler."
         }
       },
@@ -5523,6 +5526,160 @@
           "purpose": "initial scan when we created the file, never overwriting user content."
         }
       }
+    },
+    "main/gitDiffManager": {
+      "file": "src/main/gitDiffManager.js",
+      "description": "Git Diff Manager",
+      "exports": [
+        "setupIPC"
+      ],
+      "depends": [
+        "child_process",
+        "path",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "setupIPC": {
+          "line": 21,
+          "params": [
+            "ipcMain"
+          ]
+        },
+        "runDiff": {
+          "line": 56,
+          "params": [
+            "cwd",
+            "args"
+          ]
+        },
+        "detectBinary": {
+          "line": 75,
+          "params": [
+            "diff"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "GET_GIT_DIFF"
+        ],
+        "emits": []
+      }
+    },
+    "renderer/gitChangesPanel": {
+      "file": "src/renderer/gitChangesPanel.js",
+      "description": "Git Changes Panel (Changes sidebar tab)",
+      "exports": [
+        "init"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "init": {
+          "line": 22,
+          "params": [
+            "opts = {}"
+          ]
+        },
+        "handleStatus": {
+          "line": 53,
+          "params": [
+            "payload"
+          ]
+        },
+        "showMessage": {
+          "line": 77,
+          "params": [
+            "text"
+          ]
+        },
+        "partition": {
+          "line": 88,
+          "params": [
+            "files"
+          ],
+          "purpose": "`staged` and `changes` (VSCode parity)."
+        },
+        "renderGroup": {
+          "line": 125,
+          "params": [
+            "group",
+            "entries"
+          ]
+        },
+        "buildRow": {
+          "line": 143,
+          "params": [
+            "entry"
+          ]
+        },
+        "badgeChar": {
+          "line": 184,
+          "params": [
+            "entry"
+          ]
+        },
+        "normalize": {
+          "line": 196,
+          "params": [
+            "ch"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "GIT_STATUS_DATA"
+        ],
+        "emits": []
+      }
+    },
+    "renderer/diffViewer": {
+      "file": "src/renderer/diffViewer.js",
+      "description": "Diff Viewer Overlay (read-only)",
+      "exports": [
+        "init",
+        "open"
+      ],
+      "depends": [
+        "electron",
+        "diff2html",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "init": {
+          "line": 24
+        },
+        "open": {
+          "line": 60,
+          "params": [
+            "opts"
+          ],
+          "purpose": "Open the diff viewer for the given file."
+        },
+        "close": {
+          "line": 107
+        },
+        "setMode": {
+          "line": 116,
+          "params": [
+            "mode"
+          ]
+        },
+        "renderCurrent": {
+          "line": 124
+        },
+        "showLoading": {
+          "line": 135
+        },
+        "showEmpty": {
+          "line": 141,
+          "params": [
+            "message"
+          ]
+        }
+      }
     }
   },
   "ipcChannels": {
@@ -5723,6 +5880,11 @@
       },
       "GET_SAMPLE_PROJECT_PATH": {
         "name": "get-sample-project-path",
+        "direction": "",
+        "description": ""
+      },
+      "GET_GIT_DIFF": {
+        "name": "get-git-diff",
         "direction": "",
         "description": ""
       }
@@ -6170,6 +6332,13 @@
         "description": "Dialogs Module"
       }
     ],
+    "diff-viewer": [
+      {
+        "module": "renderer/diffViewer",
+        "file": "src/renderer/diffViewer.js",
+        "description": "Diff Viewer Overlay (read-only)"
+      }
+    ],
     "editor": [
       {
         "module": "renderer/editor",
@@ -6218,6 +6387,20 @@
         "module": "main/gitBranchesManager",
         "file": "src/main/gitBranchesManager.js",
         "description": "Git Branches Manager Module"
+      }
+    ],
+    "git-changes": [
+      {
+        "module": "renderer/gitChangesPanel",
+        "file": "src/renderer/gitChangesPanel.js",
+        "description": "Git Changes Panel (Changes sidebar tab)"
+      }
+    ],
+    "git-diff": [
+      {
+        "module": "main/gitDiffManager",
+        "file": "src/main/gitDiffManager.js",
+        "description": "Git Diff Manager"
       }
     ],
     "git-status": [
