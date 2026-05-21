@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Auto-generated module structure",
-  "lastUpdated": "2026-05-13",
+  "lastUpdated": "2026-05-21",
   "architecture": {},
   "modules": {
     "main/aiToolManager": {
@@ -5714,6 +5714,11 @@
       },
       "GET_SAMPLE_PROJECT_PATH": {
         "name": "get-sample-project-path",
+        "direction": "",
+        "description": ""
+      },
+      "GET_GIT_DIFF": {
+        "name": "get-git-diff",
         "direction": "",
         "description": ""
       }
