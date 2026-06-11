@@ -70,7 +70,11 @@ async function restartTerminal(projectPath) {
   if (multiTerminalUI) {
     // Set the project first, then create terminal
     multiTerminalUI.setCurrentProject(projectPath);
-    return await multiTerminalUI.createTerminalForCurrentProject();
+    const newTerminalId = await multiTerminalUI.createTerminalForCurrentProject();
+    if (newTerminalId) {
+      multiTerminalUI.enterLane(newTerminalId);
+    }
+    return newTerminalId;
   }
   return null;
 }
@@ -104,7 +108,7 @@ window.terminalCreateAndStart = async function(projectPath, toolStartCommand) {
   if (projectPath) multiTerminalUI.setCurrentProject(projectPath);
   const newTerminalId = await multiTerminalUI.createTerminalForCurrentProject();
   if (!newTerminalId) return null;
-  multiTerminalUI.setActiveTerminal(newTerminalId);
+  multiTerminalUI.enterLane(newTerminalId);
   if (toolStartCommand) {
     setTimeout(() => {
       multiTerminalUI.sendCommand(toolStartCommand, newTerminalId);

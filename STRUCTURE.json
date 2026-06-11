@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Auto-generated module structure",
-  "lastUpdated": "2026-06-03",
+  "lastUpdated": "2026-06-11",
   "architecture": {},
   "modules": {
     "main/aiToolManager": {
@@ -681,6 +681,45 @@
         ]
       }
     },
+    "main/gitDiffManager": {
+      "file": "src/main/gitDiffManager.js",
+      "description": "Git Diff Manager",
+      "exports": [
+        "setupIPC"
+      ],
+      "depends": [
+        "child_process",
+        "path",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "setupIPC": {
+          "line": 21,
+          "params": [
+            "ipcMain"
+          ]
+        },
+        "runDiff": {
+          "line": 56,
+          "params": [
+            "cwd",
+            "args"
+          ]
+        },
+        "detectBinary": {
+          "line": 75,
+          "params": [
+            "diff"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "GET_GIT_DIFF"
+        ],
+        "emits": []
+      }
+    },
     "main/gitStatusManager": {
       "file": "src/main/gitStatusManager.js",
       "description": "Git Status Manager",
@@ -731,20 +770,20 @@
           "line": 139
         },
         "readGitStatus": {
-          "line": 178,
+          "line": 179,
           "params": [
             "projectPath"
           ]
         },
         "parsePorcelainV1": {
-          "line": 199,
+          "line": 203,
           "params": [
             "stdout"
           ],
-          "purpose": "Format: \"XY <path>\\0\" with renamed/copied entries adding \"<oldpath>\\0\" after."
+          "purpose": "File entries: \"XY <path>\\0\" with renamed/copied adding \"<oldpath>\\0\" after."
         },
         "classify": {
-          "line": 240,
+          "line": 260,
           "params": [
             "index",
             "worktree"
@@ -1374,16 +1413,23 @@
           ],
           "purpose": "Initialize PTY manager with window reference"
         },
+        "getForegroundCommand": {
+          "line": 34,
+          "params": [
+            "shellPid",
+            "callback"
+          ],
+          "purpose": "falls back to the bare process name."
+        },
         "getDefaultShell": {
-          "line": 26,
-          "purpose": "Get default shell based on platform"
+          "line": 53
         },
         "getAvailableShells": {
-          "line": 43,
+          "line": 70,
           "purpose": "Get available shells on the system"
         },
         "createTerminal": {
-          "line": 129,
+          "line": 156,
           "params": [
             "workingDir = null",
             "projectPath = null",
@@ -1391,21 +1437,21 @@
           ]
         },
         "getTerminalsByProject": {
-          "line": 197,
+          "line": 256,
           "params": [
             "projectPath"
           ],
           "purpose": "Get terminals for a specific project"
         },
         "getTerminalInfo": {
-          "line": 212,
+          "line": 271,
           "params": [
             "terminalId"
           ],
           "purpose": "Get terminal info"
         },
         "writeToTerminal": {
-          "line": 223,
+          "line": 282,
           "params": [
             "terminalId",
             "data"
@@ -1413,7 +1459,7 @@
           "purpose": "Write data to specific terminal"
         },
         "resizeTerminal": {
-          "line": 233,
+          "line": 292,
           "params": [
             "terminalId",
             "cols",
@@ -1422,33 +1468,33 @@
           "purpose": "Resize specific terminal"
         },
         "destroyTerminal": {
-          "line": 243,
+          "line": 302,
           "params": [
             "terminalId"
           ],
           "purpose": "Destroy specific terminal"
         },
         "destroyAll": {
-          "line": 255,
+          "line": 315,
           "purpose": "Destroy all terminals"
         },
         "getTerminalCount": {
-          "line": 266,
+          "line": 327,
           "purpose": "Get terminal count"
         },
         "getTerminalIds": {
-          "line": 273,
+          "line": 334,
           "purpose": "Get all terminal IDs"
         },
         "hasTerminal": {
-          "line": 280,
+          "line": 341,
           "params": [
             "terminalId"
           ],
           "purpose": "Check if terminal exists"
         },
         "setupIPC": {
-          "line": 287,
+          "line": 348,
           "params": [
             "ipcMain"
           ],
@@ -1465,7 +1511,8 @@
         ],
         "emits": [
           "TERMINAL_OUTPUT_ID",
-          "TERMINAL_DESTROYED"
+          "TERMINAL_DESTROYED",
+          "TERMINAL_PROCESS_DATA"
         ]
       }
     },
@@ -1752,6 +1799,78 @@
           "TASKS_DATA",
           "SPEC_DATA"
         ]
+      }
+    },
+    "main/structureBootstrap": {
+      "file": "src/main/structureBootstrap.js",
+      "description": "Structure Bootstrap",
+      "exports": [
+        "bootstrapStructure",
+        "copyParserScripts",
+        "detectHookSetup",
+        "installPreCommitHook",
+        "runInitialFullScan"
+      ],
+      "depends": [
+        "fs",
+        "path",
+        "child_process",
+        "shared/frameConstants",
+        "shared/frameTemplates"
+      ],
+      "functions": {
+        "copyParserScripts": {
+          "line": 47,
+          "params": [
+            "projectPath"
+          ],
+          "purpose": "latest parser to all projects on their next init)."
+        },
+        "detectHookSetup": {
+          "line": 84,
+          "params": [
+            "projectPath"
+          ],
+          "purpose": "- 'vanilla'  — no existing hook (or only the .sample), safe to write"
+        },
+        "hasFrameSnippet": {
+          "line": 139,
+          "params": [
+            "hookFilePath"
+          ],
+          "purpose": "Check if our managed snippet is already present in a hook file."
+        },
+        "installPreCommitHook": {
+          "line": 156,
+          "params": [
+            "projectPath"
+          ],
+          "purpose": "manualInstructions: string shown to user when we can't auto-install"
+        },
+        "appendToHookFile": {
+          "line": 211,
+          "params": [
+            "hookPath",
+            "createIfMissing",
+            "needsShebang"
+          ],
+          "purpose": "Append the Frame snippet to an existing hook file (husky case)."
+        },
+        "runInitialFullScan": {
+          "line": 247,
+          "params": [
+            "projectPath"
+          ],
+          "purpose": "Returns: { status, message }"
+        },
+        "bootstrapStructure": {
+          "line": 287,
+          "params": [
+            "projectPath",
+            "structureWasCreated"
+          ],
+          "purpose": "initial scan when we created the file, never overwriting user content."
+        }
       }
     },
     "main/tasksManager": {
@@ -2368,6 +2487,52 @@
         }
       }
     },
+    "renderer/diffViewer": {
+      "file": "src/renderer/diffViewer.js",
+      "description": "Diff Viewer Overlay (read-only)",
+      "exports": [
+        "init",
+        "open"
+      ],
+      "depends": [
+        "electron",
+        "diff2html",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "init": {
+          "line": 24
+        },
+        "open": {
+          "line": 63,
+          "params": [
+            "opts"
+          ],
+          "purpose": "Open the diff viewer for the given file."
+        },
+        "close": {
+          "line": 110
+        },
+        "setMode": {
+          "line": 119,
+          "params": [
+            "mode"
+          ]
+        },
+        "renderCurrent": {
+          "line": 127
+        },
+        "showLoading": {
+          "line": 138
+        },
+        "showEmpty": {
+          "line": 144,
+          "params": [
+            "message"
+          ]
+        }
+      }
+    },
     "renderer/editor": {
       "file": "src/renderer/editor.js",
       "description": "File Editor Module",
@@ -2598,6 +2763,75 @@
           "LOAD_FILE_TREE",
           "WATCH_GIT_STATUS"
         ]
+      }
+    },
+    "renderer/gitChangesPanel": {
+      "file": "src/renderer/gitChangesPanel.js",
+      "description": "Git Changes Panel (Changes sidebar tab)",
+      "exports": [
+        "init"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "init": {
+          "line": 22,
+          "params": [
+            "opts = {}"
+          ]
+        },
+        "handleStatus": {
+          "line": 53,
+          "params": [
+            "payload"
+          ]
+        },
+        "showMessage": {
+          "line": 77,
+          "params": [
+            "text"
+          ]
+        },
+        "partition": {
+          "line": 88,
+          "params": [
+            "files"
+          ],
+          "purpose": "`staged` and `changes` (VSCode parity)."
+        },
+        "renderGroup": {
+          "line": 125,
+          "params": [
+            "group",
+            "entries"
+          ]
+        },
+        "buildRow": {
+          "line": 143,
+          "params": [
+            "entry"
+          ]
+        },
+        "badgeChar": {
+          "line": 184,
+          "params": [
+            "entry"
+          ]
+        },
+        "normalize": {
+          "line": 196,
+          "params": [
+            "ch"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "GIT_STATUS_DATA"
+        ],
+        "emits": []
       }
     },
     "renderer/githubPanel": {
@@ -2955,18 +3189,18 @@
           "purpose": "Setup button click handlers"
         },
         "setupUpdateDot": {
-          "line": 319,
+          "line": 320,
           "purpose": "→ About → \"Dismiss this version\"). Both click open Settings → About."
         },
         "revealSidebarTab": {
-          "line": 350,
+          "line": 351,
           "params": [
             "tabName"
           ],
           "purpose": "commands so they don't try to focus an element inside a hidden container."
         },
         "registerCommands": {
-          "line": 369,
+          "line": 370,
           "purpose": "Command Palette and the global keyboard handler."
         }
       },
@@ -2982,6 +3216,171 @@
         ]
       }
     },
+    "renderer/laneBoard": {
+      "file": "src/renderer/laneBoard.js",
+      "description": "Lane Board Module",
+      "exports": [
+        "LaneBoard",
+        "formatRelativeTime",
+        "STATUS_LABELS",
+        "cleanCommand"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels",
+        "laneStatus",
+        "laneRail",
+        "lucide"
+      ],
+      "functions": {
+        "statusLabel": {
+          "line": 29,
+          "params": [
+            "status",
+            "foreground",
+            "commandLine"
+          ],
+          "purpose": "running. Falls back to the process name when no command line is known."
+        },
+        "cleanCommand": {
+          "line": 40,
+          "params": [
+            "commandLine"
+          ],
+          "purpose": "label reads like what the user typed, not like absolute-path soup."
+        },
+        "lucideIcon": {
+          "line": 52,
+          "params": [
+            "data",
+            "size = 14"
+          ],
+          "purpose": "detection — never a static tag, so failed launches leave nothing behind."
+        },
+        "formatRelativeTime": {
+          "line": 60,
+          "params": [
+            "ts"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "GIT_STATUS_DATA"
+        ],
+        "emits": []
+      }
+    },
+    "renderer/laneStatus": {
+      "file": "src/renderer/laneStatus.js",
+      "description": "Lane Status Module",
+      "exports": [
+        "init",
+        "onChange",
+        "getStatus",
+        "remove",
+        "detectAgentName",
+        "KNOWN_AGENTS",
+        "AGENT_PATTERNS",
+        "APPROVAL_PATTERNS"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels"
+      ],
+      "functions": {
+        "init": {
+          "line": 64,
+          "params": [
+            "terminalManager"
+          ],
+          "purpose": "Initialize with the TerminalManager (needed to read xterm buffers)."
+        },
+        "onChange": {
+          "line": 95,
+          "params": [
+            "callback"
+          ],
+          "purpose": "Callback signature: (terminalId, statusEntry)"
+        },
+        "getStatus": {
+          "line": 104,
+          "params": [
+            "terminalId"
+          ],
+          "purpose": "Returns { status, lastActivityAt, foreground, commandLine, agentName }."
+        },
+        "detectAgentName": {
+          "line": 123,
+          "params": [
+            "foreground",
+            "commandLine"
+          ],
+          "purpose": "Live data only — a failed launch or an exited agent leaves nothing."
+        },
+        "remove": {
+          "line": 137,
+          "params": [
+            "terminalId"
+          ],
+          "purpose": "Drop tracking for a closed terminal."
+        },
+        "_isShellProcess": {
+          "line": 153,
+          "params": [
+            "processName",
+            "shellName"
+          ]
+        },
+        "_ensureEntry": {
+          "line": 160,
+          "params": [
+            "terminalId"
+          ]
+        },
+        "_isAgentMode": {
+          "line": 174,
+          "params": [
+            "entry",
+            "tail"
+          ],
+          "purpose": "the buffer tail carries an agent TUI fingerprint."
+        },
+        "_onOutput": {
+          "line": 179,
+          "params": [
+            "terminalId"
+          ]
+        },
+        "_classifyQuiet": {
+          "line": 202,
+          "params": [
+            "terminalId"
+          ]
+        },
+        "_readBufferTail": {
+          "line": 228,
+          "params": [
+            "terminalId"
+          ]
+        },
+        "_emit": {
+          "line": 248,
+          "params": [
+            "terminalId",
+            "entry"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "TERMINAL_OUTPUT_ID",
+          "TERMINAL_PROCESS_DATA",
+          "TERMINAL_DESTROYED"
+        ],
+        "emits": []
+      }
+    },
     "renderer/multiTerminalUI": {
       "file": "src/renderer/multiTerminalUI.js",
       "description": "Multi-Terminal UI Module",
@@ -2992,7 +3391,12 @@
         "terminalManager",
         "terminalTabBar",
         "terminalGrid",
-        "overviewPanel"
+        "laneBoard",
+        "laneStatus",
+        "laneDetailRail",
+        "overviewPanel",
+        "taskSection",
+        "specSection"
       ],
       "functions": {}
     },
@@ -3519,6 +3923,29 @@
         ]
       }
     },
+    "renderer/sampleBanner": {
+      "file": "src/renderer/sampleBanner.js",
+      "description": "Sample Mode (banner + auto-opened side panels)",
+      "exports": [
+        "init"
+      ],
+      "depends": [
+        "state",
+        "tasksPanel",
+        "specPanel"
+      ],
+      "functions": {
+        "init": {
+          "line": 24
+        },
+        "setVisible": {
+          "line": 58,
+          "params": [
+            "visible"
+          ]
+        }
+      }
+    },
     "renderer/settingsModal": {
       "file": "src/renderer/settingsModal.js",
       "description": "Settings Modal",
@@ -3881,6 +4308,213 @@
           "WATCH_SPECS",
           "LOAD_TASKS",
           "UNWATCH_SPECS",
+          "UPDATE_TASK"
+        ]
+      }
+    },
+    "renderer/specPanelResize": {
+      "file": "src/renderer/specPanelResize.js",
+      "description": "Specs Panel Resize Module",
+      "exports": [
+        "init",
+        "resetWidth",
+        "toggleWide"
+      ],
+      "depends": [],
+      "functions": {
+        "init": {
+          "line": 25
+        },
+        "onMouseDown": {
+          "line": 51,
+          "params": [
+            "e"
+          ]
+        },
+        "onMouseMove": {
+          "line": 60,
+          "params": [
+            "e"
+          ]
+        },
+        "onMouseUp": {
+          "line": 70
+        },
+        "resetWidth": {
+          "line": 79
+        },
+        "toggleWide": {
+          "line": 88,
+          "purpose": "preset wide width. Drag handle still works for fine-tuning."
+        },
+        "refreshToggleIcon": {
+          "line": 97
+        }
+      }
+    },
+    "renderer/specsDashboard": {
+      "file": "src/renderer/specsDashboard.js",
+      "description": "Specs Dashboard Module",
+      "exports": [
+        "init",
+        "show",
+        "hide",
+        "toggle"
+      ],
+      "depends": [
+        "electron",
+        "marked",
+        "shared/ipcChannels",
+        "state",
+        "specPanel",
+        "taskInfoModal"
+      ],
+      "functions": {
+        "init": {
+          "line": 49
+        },
+        "setupIPCListeners": {
+          "line": 81
+        },
+        "show": {
+          "line": 107,
+          "purpose": "─── Visibility ──────────────────────────────────────────"
+        },
+        "hide": {
+          "line": 138
+        },
+        "toggle": {
+          "line": 145
+        },
+        "renderFilters": {
+          "line": 151,
+          "purpose": "─── Filters ─────────────────────────────────────────────"
+        },
+        "applyFilter": {
+          "line": 165,
+          "params": [
+            "specsList"
+          ]
+        },
+        "renderGrid": {
+          "line": 178,
+          "purpose": "─── Grid ────────────────────────────────────────────────"
+        },
+        "renderCard": {
+          "line": 206,
+          "params": [
+            "spec"
+          ]
+        },
+        "selectCard": {
+          "line": 237,
+          "params": [
+            "slug"
+          ],
+          "purpose": "─── Detail aside ───────────────────────────────────────"
+        },
+        "clearSelection": {
+          "line": 245
+        },
+        "reloadDetail": {
+          "line": 253
+        },
+        "renderDetailHeader": {
+          "line": 269
+        },
+        "nextActionForPhase": {
+          "line": 340,
+          "params": [
+            "phase"
+          ]
+        },
+        "renderNextActionBar": {
+          "line": 356,
+          "params": [
+            "action"
+          ]
+        },
+        "runSpecCommand": {
+          "line": 370,
+          "params": [
+            "command"
+          ]
+        },
+        "tabBtn": {
+          "line": 389,
+          "params": [
+            "tab",
+            "label",
+            "hasContent"
+          ]
+        },
+        "renderDetailBody": {
+          "line": 395
+        },
+        "renderTasksTabBody": {
+          "line": 416
+        },
+        "renderSpecTaskRow": {
+          "line": 453,
+          "params": [
+            "task"
+          ]
+        },
+        "attachTaskActionHandlers": {
+          "line": 502
+        },
+        "handleSpecTaskAction": {
+          "line": 515,
+          "params": [
+            "taskId",
+            "action"
+          ]
+        },
+        "hasSpecTasks": {
+          "line": 526,
+          "purpose": "─── Helpers ────────────────────────────────────────────"
+        },
+        "tasksTabLabel": {
+          "line": 532,
+          "params": [
+            "hasMarkdown"
+          ]
+        },
+        "renderMarkdown": {
+          "line": 541,
+          "params": [
+            "md"
+          ]
+        },
+        "escapeHtml": {
+          "line": 546,
+          "params": [
+            "s"
+          ]
+        },
+        "relativeTime": {
+          "line": 552,
+          "params": [
+            "iso"
+          ]
+        },
+        "displayProjectName": {
+          "line": 563,
+          "params": [
+            "projectPath"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "SPEC_DATA",
+          "TASKS_DATA",
+          "TOGGLE_SPECS_DASHBOARD",
+          "SPEC_DATA"
+        ],
+        "emits": [
+          "WATCH_SPECS",
+          "LOAD_TASKS",
           "UPDATE_TASK"
         ]
       }
@@ -4257,6 +4891,68 @@
         },
         "close": {
           "line": 55
+        }
+      }
+    },
+    "renderer/taskRunModal": {
+      "file": "src/renderer/taskRunModal.js",
+      "description": "Task Run Modal",
+      "exports": [
+        "init",
+        "open"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels",
+        "aiToolSelector",
+        "state"
+      ],
+      "functions": {
+        "init": {
+          "line": 37
+        },
+        "updateTerminalChoiceUI": {
+          "line": 85
+        },
+        "updateBranchChoiceUI": {
+          "line": 91
+        },
+        "getTerminalChoice": {
+          "line": 99
+        },
+        "getBranchChoice": {
+          "line": 104
+        },
+        "getCliChoice": {
+          "line": 109
+        },
+        "populateCliOptions": {
+          "line": 114
+        },
+        "loadCurrentBranch": {
+          "line": 144
+        },
+        "open": {
+          "line": 164,
+          "params": [
+            "task",
+            "opts = {}"
+          ]
+        },
+        "close": {
+          "line": 190
+        },
+        "confirm": {
+          "line": 198
+        },
+        "cancel": {
+          "line": 210
+        },
+        "escapeHtml": {
+          "line": 216,
+          "params": [
+            "s"
+          ]
         }
       }
     },
@@ -4744,7 +5440,7 @@
           "purpose": "Restart terminal with new path (creates new terminal in path for current project)"
         },
         "sendCommand": {
-          "line": 81,
+          "line": 85,
           "params": [
             "command",
             "terminalId = null"
@@ -4752,14 +5448,14 @@
           "purpose": "Send command to active terminal or specific terminal"
         },
         "setActiveTerminal": {
-          "line": 90,
+          "line": 94,
           "params": [
             "terminalId"
           ],
           "purpose": "Set active terminal"
         },
         "getMultiTerminalUI": {
-          "line": 162,
+          "line": 166,
           "purpose": "Get MultiTerminalUI instance"
         }
       },
@@ -4780,8 +5476,19 @@
         "TerminalGrid",
         "GRID_LAYOUTS"
       ],
-      "depends": [],
-      "functions": {}
+      "depends": [
+        "laneStatus",
+        "lucide"
+      ],
+      "functions": {
+        "lucideIcon": {
+          "line": 27,
+          "params": [
+            "data",
+            "size = 13"
+          ]
+        }
+      }
     },
     "renderer/terminalManager": {
       "file": "src/renderer/terminalManager.js",
@@ -4829,23 +5536,23 @@
     },
     "renderer/terminalTabBar": {
       "file": "src/renderer/terminalTabBar.js",
-      "description": "Terminal Tab Bar Module",
+      "description": "Terminal Top Bar Module (historically the tab bar)",
       "exports": [
         "TerminalTabBar"
       ],
       "depends": [
         "electron",
         "shared/ipcChannels",
-        "tasksPanel",
+        "tasksDashboard",
         "pluginsPanel",
         "githubPanel",
         "promptsPanel",
-        "specPanel",
+        "specsDashboard",
         "lucide"
       ],
       "functions": {
         "lucideIcon": {
-          "line": 15,
+          "line": 22,
           "params": [
             "data",
             "size = 18"
@@ -5046,298 +5753,6 @@
       "depends": [],
       "functions": {}
     },
-    "renderer/specsDashboard": {
-      "file": "src/renderer/specsDashboard.js",
-      "description": "Specs Dashboard Module",
-      "exports": [
-        "init",
-        "show",
-        "hide",
-        "toggle"
-      ],
-      "depends": [
-        "electron",
-        "marked",
-        "shared/ipcChannels",
-        "state",
-        "specPanel",
-        "taskInfoModal"
-      ],
-      "functions": {
-        "init": {
-          "line": 49
-        },
-        "setupIPCListeners": {
-          "line": 81
-        },
-        "show": {
-          "line": 107,
-          "purpose": "─── Visibility ──────────────────────────────────────────"
-        },
-        "hide": {
-          "line": 138
-        },
-        "toggle": {
-          "line": 145
-        },
-        "renderFilters": {
-          "line": 151,
-          "purpose": "─── Filters ─────────────────────────────────────────────"
-        },
-        "applyFilter": {
-          "line": 165,
-          "params": [
-            "specsList"
-          ]
-        },
-        "renderGrid": {
-          "line": 178,
-          "purpose": "─── Grid ────────────────────────────────────────────────"
-        },
-        "renderCard": {
-          "line": 206,
-          "params": [
-            "spec"
-          ]
-        },
-        "selectCard": {
-          "line": 237,
-          "params": [
-            "slug"
-          ],
-          "purpose": "─── Detail aside ───────────────────────────────────────"
-        },
-        "clearSelection": {
-          "line": 245
-        },
-        "reloadDetail": {
-          "line": 253
-        },
-        "renderDetailHeader": {
-          "line": 269
-        },
-        "nextActionForPhase": {
-          "line": 340,
-          "params": [
-            "phase"
-          ]
-        },
-        "renderNextActionBar": {
-          "line": 356,
-          "params": [
-            "action"
-          ]
-        },
-        "runSpecCommand": {
-          "line": 370,
-          "params": [
-            "command"
-          ]
-        },
-        "tabBtn": {
-          "line": 389,
-          "params": [
-            "tab",
-            "label",
-            "hasContent"
-          ]
-        },
-        "renderDetailBody": {
-          "line": 395
-        },
-        "renderTasksTabBody": {
-          "line": 416
-        },
-        "renderSpecTaskRow": {
-          "line": 453,
-          "params": [
-            "task"
-          ]
-        },
-        "attachTaskActionHandlers": {
-          "line": 502
-        },
-        "handleSpecTaskAction": {
-          "line": 515,
-          "params": [
-            "taskId",
-            "action"
-          ]
-        },
-        "hasSpecTasks": {
-          "line": 526,
-          "purpose": "─── Helpers ────────────────────────────────────────────"
-        },
-        "tasksTabLabel": {
-          "line": 532,
-          "params": [
-            "hasMarkdown"
-          ]
-        },
-        "renderMarkdown": {
-          "line": 541,
-          "params": [
-            "md"
-          ]
-        },
-        "escapeHtml": {
-          "line": 546,
-          "params": [
-            "s"
-          ]
-        },
-        "relativeTime": {
-          "line": 552,
-          "params": [
-            "iso"
-          ]
-        },
-        "displayProjectName": {
-          "line": 563,
-          "params": [
-            "projectPath"
-          ]
-        }
-      },
-      "ipc": {
-        "listens": [
-          "SPEC_DATA",
-          "TASKS_DATA",
-          "TOGGLE_SPECS_DASHBOARD",
-          "SPEC_DATA"
-        ],
-        "emits": [
-          "WATCH_SPECS",
-          "LOAD_TASKS",
-          "UPDATE_TASK"
-        ]
-      }
-    },
-    "renderer/specPanelResize": {
-      "file": "src/renderer/specPanelResize.js",
-      "description": "Specs Panel Resize Module",
-      "exports": [
-        "init",
-        "resetWidth",
-        "toggleWide"
-      ],
-      "depends": [],
-      "functions": {
-        "init": {
-          "line": 25
-        },
-        "onMouseDown": {
-          "line": 51,
-          "params": [
-            "e"
-          ]
-        },
-        "onMouseMove": {
-          "line": 60,
-          "params": [
-            "e"
-          ]
-        },
-        "onMouseUp": {
-          "line": 70
-        },
-        "resetWidth": {
-          "line": 79
-        },
-        "toggleWide": {
-          "line": 88,
-          "purpose": "preset wide width. Drag handle still works for fine-tuning."
-        },
-        "refreshToggleIcon": {
-          "line": 97
-        }
-      }
-    },
-    "renderer/taskRunModal": {
-      "file": "src/renderer/taskRunModal.js",
-      "description": "Task Run Modal",
-      "exports": [
-        "init",
-        "open"
-      ],
-      "depends": [
-        "electron",
-        "shared/ipcChannels",
-        "aiToolSelector",
-        "state"
-      ],
-      "functions": {
-        "init": {
-          "line": 37
-        },
-        "updateTerminalChoiceUI": {
-          "line": 85
-        },
-        "updateBranchChoiceUI": {
-          "line": 91
-        },
-        "getTerminalChoice": {
-          "line": 99
-        },
-        "getBranchChoice": {
-          "line": 104
-        },
-        "getCliChoice": {
-          "line": 109
-        },
-        "populateCliOptions": {
-          "line": 114
-        },
-        "loadCurrentBranch": {
-          "line": 144
-        },
-        "open": {
-          "line": 164,
-          "params": [
-            "task",
-            "opts = {}"
-          ]
-        },
-        "close": {
-          "line": 190
-        },
-        "confirm": {
-          "line": 198
-        },
-        "cancel": {
-          "line": 210
-        },
-        "escapeHtml": {
-          "line": 216,
-          "params": [
-            "s"
-          ]
-        }
-      }
-    },
-    "renderer/sampleBanner": {
-      "file": "src/renderer/sampleBanner.js",
-      "description": "Sample Mode (banner + auto-opened side panels)",
-      "exports": [
-        "init"
-      ],
-      "depends": [
-        "state",
-        "tasksPanel",
-        "specPanel"
-      ],
-      "functions": {
-        "init": {
-          "line": 24
-        },
-        "setVisible": {
-          "line": 58,
-          "params": [
-            "visible"
-          ]
-        }
-      }
-    },
     "templates/sample-project/src/api/server": {
       "file": "src/templates/sample-project/src/api/server.js",
       "description": "Express server — app factory",
@@ -5474,228 +5889,559 @@
         }
       }
     },
-    "main/structureBootstrap": {
-      "file": "src/main/structureBootstrap.js",
-      "description": "Structure Bootstrap",
+    "renderer/laneDetailRail": {
+      "file": "src/renderer/laneDetailRail.js",
+      "description": "Lane Detail Rail Module",
       "exports": [
-        "bootstrapStructure",
-        "copyParserScripts",
-        "detectHookSetup",
-        "installPreCommitHook",
-        "runInitialFullScan"
+        "render"
       ],
       "depends": [
-        "fs",
-        "path",
-        "child_process",
-        "shared/frameConstants",
-        "shared/frameTemplates"
+        "laneStatus",
+        "laneBoard",
+        "lucide"
       ],
       "functions": {
-        "copyParserScripts": {
-          "line": 47,
+        "itemStatusText": {
+          "line": 37,
           "params": [
-            "projectPath"
+            "s"
           ],
-          "purpose": "latest parser to all projects on their next init)."
+          "purpose": "agents read \"claude · Needs approval\", commands read \"Running · npm run dev\"."
         },
-        "detectHookSetup": {
-          "line": 84,
+        "lucideIcon": {
+          "line": 51,
           "params": [
-            "projectPath"
-          ],
-          "purpose": "- 'vanilla'  — no existing hook (or only the .sample), safe to write"
-        },
-        "hasFrameSnippet": {
-          "line": 139,
-          "params": [
-            "hookFilePath"
-          ],
-          "purpose": "Check if our managed snippet is already present in a hook file."
-        },
-        "installPreCommitHook": {
-          "line": 156,
-          "params": [
-            "projectPath"
-          ],
-          "purpose": "manualInstructions: string shown to user when we can't auto-install"
-        },
-        "appendToHookFile": {
-          "line": 211,
-          "params": [
-            "hookPath",
-            "createIfMissing",
-            "needsShebang"
-          ],
-          "purpose": "Append the Frame snippet to an existing hook file (husky case)."
-        },
-        "runInitialFullScan": {
-          "line": 247,
-          "params": [
-            "projectPath"
-          ],
-          "purpose": "Returns: { status, message }"
-        },
-        "bootstrapStructure": {
-          "line": 287,
-          "params": [
-            "projectPath",
-            "structureWasCreated"
-          ],
-          "purpose": "initial scan when we created the file, never overwriting user content."
-        }
-      }
-    },
-    "main/gitDiffManager": {
-      "file": "src/main/gitDiffManager.js",
-      "description": "Git Diff Manager",
-      "exports": [
-        "setupIPC"
-      ],
-      "depends": [
-        "child_process",
-        "path",
-        "shared/ipcChannels"
-      ],
-      "functions": {
-        "setupIPC": {
-          "line": 21,
-          "params": [
-            "ipcMain"
+            "data",
+            "size = 14"
           ]
         },
-        "runDiff": {
-          "line": 56,
-          "params": [
-            "cwd",
-            "args"
-          ]
-        },
-        "detectBinary": {
-          "line": 75,
-          "params": [
-            "diff"
-          ]
-        }
-      },
-      "ipc": {
-        "listens": [
-          "GET_GIT_DIFF"
-        ],
-        "emits": []
-      }
-    },
-    "renderer/gitChangesPanel": {
-      "file": "src/renderer/gitChangesPanel.js",
-      "description": "Git Changes Panel (Changes sidebar tab)",
-      "exports": [
-        "init"
-      ],
-      "depends": [
-        "electron",
-        "shared/ipcChannels"
-      ],
-      "functions": {
-        "init": {
-          "line": 22,
-          "params": [
-            "opts = {}"
-          ]
-        },
-        "handleStatus": {
-          "line": 53,
-          "params": [
-            "payload"
-          ]
-        },
-        "showMessage": {
-          "line": 77,
+        "escapeHtml": {
+          "line": 59,
           "params": [
             "text"
           ]
         },
-        "partition": {
+        "isHidden": {
+          "line": 65
+        },
+        "setHidden": {
+          "line": 73,
+          "params": [
+            "hidden"
+          ]
+        },
+        "render": {
+          "line": 83,
+          "params": [
+            "el",
+            "state",
+            "cbs"
+          ],
+          "purpose": "re-renders itself on lane status changes while visible."
+        },
+        "_renderInto": {
+          "line": 100
+        },
+        "_startTicker": {
+          "line": 175
+        }
+      }
+    },
+    "renderer/laneRail": {
+      "file": "src/renderer/laneRail.js",
+      "description": "Lane Rail Module",
+      "exports": [
+        "render"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels",
+        "lucide",
+        "specsDashboard",
+        "specSection",
+        "tasksDashboard",
+        "taskSection"
+      ],
+      "functions": {
+        "lucideIcon": {
+          "line": 37,
+          "params": [
+            "data",
+            "size = 14"
+          ]
+        },
+        "escapeHtml": {
+          "line": 45,
+          "params": [
+            "text"
+          ]
+        },
+        "getUIState": {
+          "line": 53,
+          "purpose": "─── Persisted UI state ─────────────────────────────────────"
+        },
+        "setUIState": {
+          "line": 64,
+          "params": [
+            "partial"
+          ]
+        },
+        "_initOnce": {
+          "line": 73,
+          "purpose": "─── Data ───────────────────────────────────────────────────"
+        },
+        "_fetchForProject": {
           "line": 88,
           "params": [
-            "files"
+            "projectPath"
+          ]
+        },
+        "_rerenderIfVisible": {
+          "line": 99
+        },
+        "render": {
+          "line": 111,
+          "params": [
+            "container",
+            "projectPath"
           ],
-          "purpose": "`staged` and `changes` (VSCode parity)."
+          "purpose": "Called by laneBoard on every board render."
         },
-        "renderGroup": {
-          "line": 125,
+        "_renderInto": {
+          "line": 127,
           "params": [
-            "group",
-            "entries"
+            "container"
+          ],
+          "purpose": "─── Rendering ──────────────────────────────────────────────"
+        },
+        "_renderCollapsedStrip": {
+          "line": 152
+        },
+        "_sectionHeader": {
+          "line": 176,
+          "params": [
+            "{ title",
+            "count",
+            "collapsed",
+            "onToggle",
+            "onOpen",
+            "openTitle }"
           ]
         },
-        "buildRow": {
-          "line": 143,
+        "_renderSpecsSection": {
+          "line": 195,
           "params": [
-            "entry"
+            "ui"
           ]
         },
-        "badgeChar": {
-          "line": 184,
+        "_specProgress": {
+          "line": 249,
           "params": [
-            "entry"
+            "spec"
           ]
         },
-        "normalize": {
-          "line": 196,
+        "_renderTasksSection": {
+          "line": 266,
           "params": [
-            "ch"
+            "ui"
+          ]
+        },
+        "_moreLink": {
+          "line": 322,
+          "params": [
+            "label",
+            "onClick"
           ]
         }
       },
       "ipc": {
         "listens": [
-          "GIT_STATUS_DATA"
+          "SPEC_DATA",
+          "TASKS_DATA"
         ],
-        "emits": []
+        "emits": [
+          "LOAD_TASKS"
+        ]
       }
     },
-    "renderer/diffViewer": {
-      "file": "src/renderer/diffViewer.js",
-      "description": "Diff Viewer Overlay (read-only)",
+    "renderer/specDetailModal": {
+      "file": "src/renderer/specDetailModal.js",
+      "description": "Spec Detail Modal Module",
       "exports": [
-        "init",
-        "open"
+        "show",
+        "close"
       ],
       "depends": [
         "electron",
-        "diff2html",
-        "shared/ipcChannels"
+        "marked",
+        "shared/ipcChannels",
+        "state",
+        "lucide"
       ],
       "functions": {
-        "init": {
-          "line": 24
-        },
-        "open": {
-          "line": 63,
+        "show": {
+          "line": 33,
           "params": [
-            "opts"
+            "slug"
           ],
-          "purpose": "Open the diff viewer for the given file."
+          "purpose": "─── Public API ─────────────────────────────────────"
         },
         "close": {
-          "line": 110
+          "line": 49
         },
-        "setMode": {
-          "line": 119,
+        "_bindIPC": {
+          "line": 61,
+          "purpose": "─── Live updates while open ────────────────────────"
+        },
+        "_ensureOverlay": {
+          "line": 85,
+          "purpose": "─── Overlay shell ──────────────────────────────────"
+        },
+        "_onKeydown": {
+          "line": 106,
           "params": [
-            "mode"
+            "e"
           ]
         },
-        "renderCurrent": {
-          "line": 127
+        "_renderContent": {
+          "line": 116,
+          "purpose": "─── Detail rendering (mirrors specPanel's detail view) ─────"
         },
-        "showLoading": {
-          "line": 138
-        },
-        "showEmpty": {
-          "line": 144,
+        "switchTab": {
+          "line": 159,
           "params": [
-            "message"
+            "tab"
+          ]
+        },
+        "nextActionForPhase": {
+          "line": 172,
+          "params": [
+            "phase"
+          ],
+          "purpose": "underlying slash command kept visible as a small chip for transparency."
+        },
+        "renderNextActionBar": {
+          "line": 188,
+          "params": [
+            "action"
+          ]
+        },
+        "stepIndexForPhase": {
+          "line": 210,
+          "params": [
+            "phase"
+          ]
+        },
+        "renderStepper": {
+          "line": 222,
+          "params": [
+            "phase"
+          ]
+        },
+        "runSpecCommand": {
+          "line": 239,
+          "params": [
+            "command"
+          ]
+        },
+        "renderTabButton": {
+          "line": 257,
+          "params": [
+            "tab",
+            "label",
+            "hasContent"
+          ]
+        },
+        "hasSpecTasks": {
+          "line": 263
+        },
+        "tasksTabLabel": {
+          "line": 269
+        },
+        "renderTabBody": {
+          "line": 278,
+          "params": [
+            "tab"
+          ]
+        },
+        "renderTasksTabBody": {
+          "line": 290
+        },
+        "renderSpecTaskRow": {
+          "line": 328,
+          "params": [
+            "task"
+          ]
+        },
+        "_attachTaskActionHandlers": {
+          "line": 377
+        },
+        "_handleTaskAction": {
+          "line": 390,
+          "params": [
+            "taskId",
+            "action"
+          ]
+        },
+        "lucideIcon": {
+          "line": 407,
+          "params": [
+            "data",
+            "size = 14"
+          ],
+          "purpose": "─── Helpers ────────────────────────────────────────"
+        },
+        "renderMarkdown": {
+          "line": 415,
+          "params": [
+            "md"
+          ]
+        },
+        "escapeHtml": {
+          "line": 423,
+          "params": [
+            "s"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "TASKS_DATA",
+          "SPEC_DATA"
+        ],
+        "emits": [
+          "LOAD_TASKS",
+          "UPDATE_TASK"
+        ]
+      }
+    },
+    "renderer/taskSection": {
+      "file": "src/renderer/taskSection.js",
+      "description": "Task Section Module",
+      "exports": [],
+      "depends": [
+        "electron",
+        "shared/ipcChannels",
+        "state",
+        "sectionRail",
+        "lucide",
+        "tasksDashboard"
+      ],
+      "functions": {
+        "setHost": {
+          "line": 37,
+          "params": [
+            "h"
+          ],
+          "purpose": "─── Public API ─────────────────────────────────────"
+        },
+        "open": {
+          "line": 42,
+          "params": [
+            "taskId"
+          ]
+        },
+        "openInNewTab": {
+          "line": 48,
+          "params": [
+            "taskId"
+          ]
+        },
+        "createViewport": {
+          "line": 54
+        },
+        "block": {
+          "line": 196,
+          "params": [
+            "heading",
+            "content",
+            "quote = false"
+          ],
+          "purpose": "─── Rendering helpers (pure / stateless) ───────────"
+        },
+        "actionButtons": {
+          "line": 211,
+          "params": [
+            "status"
+          ]
+        },
+        "handleAction": {
+          "line": 227,
+          "params": [
+            "taskId",
+            "action"
+          ]
+        },
+        "sourceChip": {
+          "line": 242,
+          "params": [
+            "source"
+          ]
+        },
+        "formatDate": {
+          "line": 249,
+          "params": [
+            "iso"
+          ]
+        },
+        "escapeHtml": {
+          "line": 256,
+          "params": [
+            "text"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "TASKS_DATA"
+        ],
+        "emits": [
+          "LOAD_TASKS",
+          "UPDATE_TASK"
+        ]
+      }
+    },
+    "renderer/specSection": {
+      "file": "src/renderer/specSection.js",
+      "description": "Spec Section Module",
+      "exports": [],
+      "depends": [
+        "electron",
+        "marked",
+        "shared/ipcChannels",
+        "state",
+        "sectionRail",
+        "lucide",
+        "specsDashboard"
+      ],
+      "functions": {
+        "setHost": {
+          "line": 31,
+          "params": [
+            "h"
+          ],
+          "purpose": "─── Public API ─────────────────────────────────────"
+        },
+        "open": {
+          "line": 36,
+          "params": [
+            "slug"
+          ]
+        },
+        "openInNewTab": {
+          "line": 42,
+          "params": [
+            "slug"
+          ]
+        },
+        "createViewport": {
+          "line": 48
+        },
+        "nextActionForPhase": {
+          "line": 326,
+          "params": [
+            "phase"
+          ],
+          "purpose": "─── Pure helpers ───────────────────────────────────"
+        },
+        "renderNextActionBar": {
+          "line": 342,
+          "params": [
+            "action"
+          ]
+        },
+        "stepIndexForPhase": {
+          "line": 359,
+          "params": [
+            "phase"
+          ]
+        },
+        "renderStepper": {
+          "line": 371,
+          "params": [
+            "phase"
+          ]
+        },
+        "renderSpecTaskRow": {
+          "line": 388,
+          "params": [
+            "task"
+          ]
+        },
+        "handleTaskAction": {
+          "line": 437,
+          "params": [
+            "taskId",
+            "action"
+          ]
+        },
+        "renderMarkdown": {
+          "line": 446,
+          "params": [
+            "md"
+          ]
+        },
+        "escapeHtml": {
+          "line": 454,
+          "params": [
+            "s"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "TASKS_DATA",
+          "SPEC_DATA"
+        ],
+        "emits": [
+          "LOAD_TASKS",
+          "UPDATE_TASK"
+        ]
+      }
+    },
+    "renderer/sectionRail": {
+      "file": "src/renderer/sectionRail.js",
+      "description": "Section Rail Module",
+      "exports": [
+        "render"
+      ],
+      "depends": [
+        "lucide"
+      ],
+      "functions": {
+        "lucideIcon": {
+          "line": 19,
+          "params": [
+            "data",
+            "size = 14"
+          ]
+        },
+        "getState": {
+          "line": 27,
+          "params": [
+            "storageKey"
+          ]
+        },
+        "setState": {
+          "line": 38,
+          "params": [
+            "storageKey",
+            "partial"
+          ]
+        },
+        "_appendItem": {
+          "line": 45,
+          "params": [
+            "parent",
+            "it",
+            "onSelect"
+          ]
+        },
+        "render": {
+          "line": 70,
+          "params": [
+            "el",
+            "opts"
           ]
         }
       }
@@ -5757,6 +6503,16 @@
         "direction": "",
         "description": ""
       },
+      "OPEN_SAMPLE_PROJECT": {
+        "name": "open-sample-project",
+        "direction": "",
+        "description": ""
+      },
+      "GET_SAMPLE_PROJECT_PATH": {
+        "name": "get-sample-project-path",
+        "direction": "",
+        "description": ""
+      },
       "REORDER_TASKS": {
         "name": "reorder-tasks",
         "direction": "",
@@ -5782,6 +6538,11 @@
         "direction": "",
         "description": ""
       },
+      "CHECK_AI_TOOL_AVAILABLE": {
+        "name": "check-ai-tool-available",
+        "direction": "",
+        "description": ""
+      },
       "GET_USER_SETTING": {
         "name": "get-user-setting",
         "direction": "",
@@ -5802,8 +6563,18 @@
         "direction": "",
         "description": ""
       },
+      "REFRESH_GIT_STATUS": {
+        "name": "refresh-git-status",
+        "direction": "",
+        "description": ""
+      },
       "GIT_STATUS_DATA": {
         "name": "git-status-data",
+        "direction": "",
+        "description": ""
+      },
+      "GET_GIT_DIFF": {
+        "name": "get-git-diff",
         "direction": "",
         "description": ""
       },
@@ -5837,6 +6608,11 @@
         "direction": "",
         "description": ""
       },
+      "RENAME_SPEC": {
+        "name": "rename-spec",
+        "direction": "",
+        "description": ""
+      },
       "WATCH_SPECS": {
         "name": "watch-specs",
         "direction": "",
@@ -5857,8 +6633,18 @@
         "direction": "",
         "description": ""
       },
+      "TOGGLE_SPECS_DASHBOARD": {
+        "name": "toggle-specs-dashboard",
+        "direction": "",
+        "description": ""
+      },
       "GET_SPEC_PROMPT": {
         "name": "get-spec-prompt",
+        "direction": "",
+        "description": ""
+      },
+      "BUILD_SPEC_COMMAND_FILE": {
+        "name": "build-spec-command-file",
         "direction": "",
         "description": ""
       },
@@ -5872,43 +6658,8 @@
         "direction": "",
         "description": ""
       },
-      "BUILD_SPEC_COMMAND_FILE": {
-        "name": "build-spec-command-file",
-        "direction": "",
-        "description": ""
-      },
-      "TOGGLE_SPECS_DASHBOARD": {
-        "name": "toggle-specs-dashboard",
-        "direction": "",
-        "description": ""
-      },
-      "RENAME_SPEC": {
-        "name": "rename-spec",
-        "direction": "",
-        "description": ""
-      },
-      "CHECK_AI_TOOL_AVAILABLE": {
-        "name": "check-ai-tool-available",
-        "direction": "",
-        "description": ""
-      },
-      "OPEN_SAMPLE_PROJECT": {
-        "name": "open-sample-project",
-        "direction": "",
-        "description": ""
-      },
-      "GET_SAMPLE_PROJECT_PATH": {
-        "name": "get-sample-project-path",
-        "direction": "",
-        "description": ""
-      },
-      "GET_GIT_DIFF": {
-        "name": "get-git-diff",
-        "direction": "",
-        "description": ""
-      },
-      "REFRESH_GIT_STATUS": {
-        "name": "refresh-git-status",
+      "TERMINAL_PROCESS_DATA": {
+        "name": "terminal-process-data",
         "direction": "",
         "description": ""
       }
@@ -6482,6 +7233,34 @@
         "description": "IPC Channel Constants"
       }
     ],
+    "lane-board": [
+      {
+        "module": "renderer/laneBoard",
+        "file": "src/renderer/laneBoard.js",
+        "description": "Lane Board Module"
+      }
+    ],
+    "lane-detail-rail": [
+      {
+        "module": "renderer/laneDetailRail",
+        "file": "src/renderer/laneDetailRail.js",
+        "description": "Lane Detail Rail Module"
+      }
+    ],
+    "lane-rail": [
+      {
+        "module": "renderer/laneRail",
+        "file": "src/renderer/laneRail.js",
+        "description": "Lane Rail Module"
+      }
+    ],
+    "lane-status": [
+      {
+        "module": "renderer/laneStatus",
+        "file": "src/renderer/laneStatus.js",
+        "description": "Lane Status Module"
+      }
+    ],
     "menu": [
       {
         "module": "main/menu",
@@ -6541,6 +7320,13 @@
         "description": "Sample Mode (banner + auto-opened side panels)"
       }
     ],
+    "section-rail": [
+      {
+        "module": "renderer/sectionRail",
+        "file": "src/renderer/sectionRail.js",
+        "description": "Section Rail Module"
+      }
+    ],
     "server": [
       {
         "module": "templates/sample-project/src/api/server",
@@ -6586,11 +7372,25 @@
         "description": "Specs Panel Module"
       }
     ],
+    "spec-detail-modal": [
+      {
+        "module": "renderer/specDetailModal",
+        "file": "src/renderer/specDetailModal.js",
+        "description": "Spec Detail Modal Module"
+      }
+    ],
     "spec-panel-resize": [
       {
         "module": "renderer/specPanelResize",
         "file": "src/renderer/specPanelResize.js",
         "description": "Specs Panel Resize Module"
+      }
+    ],
+    "spec-section": [
+      {
+        "module": "renderer/specSection",
+        "file": "src/renderer/specSection.js",
+        "description": "Spec Section Module"
       }
     ],
     "specs-dashboard": [
@@ -6640,6 +7440,13 @@
         "module": "renderer/taskRunModal",
         "file": "src/renderer/taskRunModal.js",
         "description": "Task Run Modal"
+      }
+    ],
+    "task-section": [
+      {
+        "module": "renderer/taskSection",
+        "file": "src/renderer/taskSection.js",
+        "description": "Task Section Module"
       }
     ],
     "tasks": [
@@ -6714,7 +7521,7 @@
       {
         "module": "renderer/terminalTabBar",
         "file": "src/renderer/terminalTabBar.js",
-        "description": "Terminal Tab Bar Module"
+        "description": "Terminal Top Bar Module (historically the tab bar)"
       }
     ],
     "update-checker": [
