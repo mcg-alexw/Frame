@@ -1,9 +1,19 @@
 /* File Tree — search filter + context menu */
 
 .file-tree-search {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   margin: var(--space-sm) 0 var(--space-sm);
   flex-shrink: 0;
+}
+
+/* Wraps the input + clear button so the absolutely-positioned clear stays
+   anchored to the input, with the refresh button as a flex sibling. */
+.file-tree-search-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .file-tree-search input {
@@ -51,7 +61,7 @@
   background: var(--bg-hover);
 }
 
-.file-tree-search.has-query .file-tree-search-clear {
+.file-tree-search-field.has-query .file-tree-search-clear {
   display: block;
 }
 

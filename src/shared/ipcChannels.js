@@ -38,6 +38,7 @@ const IPC = {
   WORKSPACE_UPDATED: 'workspace-updated',
   ADD_PROJECT_TO_WORKSPACE: 'add-project-to-workspace',
   REMOVE_PROJECT_FROM_WORKSPACE: 'remove-project-from-workspace',
+  REORDER_WORKSPACE_PROJECTS: 'reorder-workspace-projects',
 
   // Frame Project
   INITIALIZE_FRAME_PROJECT: 'initialize-frame-project',

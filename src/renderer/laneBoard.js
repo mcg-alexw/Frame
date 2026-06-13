@@ -241,14 +241,15 @@ class LaneBoard {
     empty.className = 'lane-board-empty';
     empty.innerHTML = `
       <div class="lane-board-empty-icon">${lucideIcon(FolderOpen, 26)}</div>
-      <p class="lane-board-empty-title">No project selected</p>
-      <p class="lane-board-empty-hint">Frames belong to a project. Pick one from the sidebar, or select a folder to get started.</p>
-      <button class="lane-board-empty-cta">Select Project Folder</button>
+      <p class="lane-board-empty-title">No project added yet</p>
+      <p class="lane-board-empty-hint">Add a project to get started — open a folder, create a new project, or clone a repo.</p>
+      <button class="lane-board-empty-cta">Add New Project</button>
     `;
     empty.querySelector('.lane-board-empty-cta').addEventListener('click', () => {
-      // Same entry point as the sidebar button (idiom: ai.startSession does this too)
-      const btn = document.getElementById('btn-select-project');
-      if (btn) btn.click();
+      // Same flow as the sidebar Projects "Add new Project" button — the Open
+      // Project modal (open folder / create / clone). Lazy-required to avoid
+      // load-order coupling.
+      require('./openProjectModal').open();
     });
     return empty;
   }

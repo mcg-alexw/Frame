@@ -333,7 +333,12 @@ class MultiTerminalUI {
   _detailRailCallbacks() {
     return {
       onEnterLane: (terminalId) => this.enterLane(terminalId),
-      onLayoutChange: () => setTimeout(() => this.manager.fitAll(), 60)
+      onLayoutChange: () => setTimeout(() => this.manager.fitAll(), 60),
+      onNewLane: () => {
+        this.createTerminalForCurrentProject().then((id) => {
+          if (id) this.enterLane(id);
+        });
+      }
     };
   }
 
@@ -529,6 +534,18 @@ class MultiTerminalUI {
    */
   getManager() {
     return this.manager;
+  }
+
+  /**
+   * True only when a Frame's terminal is the surface on screen — not the lane
+   * board, an open section (task/spec) viewport, or the overview. Used by the
+   * sidebar launch shortcut to decide between "start in the focused Frame" and
+   * "open a new Frame".
+   */
+  isViewingFrame() {
+    return this.manager.viewMode === 'detail'
+      && !this.isSectionVisible
+      && !this.isOverviewVisible;
   }
 
   /**

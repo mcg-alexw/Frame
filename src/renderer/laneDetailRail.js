@@ -13,7 +13,7 @@
 
 const laneStatus = require('./laneStatus');
 const { formatRelativeTime, cleanCommand, assignmentIcon, assignmentText } = require('./laneBoard');
-const { PanelRightClose, PanelRightOpen, Terminal, Bot } = require('lucide');
+const { PanelRightClose, PanelRightOpen, Terminal, Bot, Plus } = require('lucide');
 
 const STORAGE_KEY = 'frame-detail-lanes-rail';
 
@@ -173,6 +173,18 @@ function _renderInto() {
   });
 
   container.appendChild(body);
+
+  // New Frame — the top-bar "+" is retired; creating a Frame lives here, next
+  // to the list it adds to.
+  const addBtn = document.createElement('button');
+  addBtn.className = 'lane-rail-add-btn';
+  addBtn.title = 'New Frame';
+  addBtn.innerHTML = `${lucideIcon(Plus, 14)}<span>Add new Frame</span>`;
+  addBtn.addEventListener('click', () => {
+    if (callbacks.onNewLane) callbacks.onNewLane();
+  });
+  container.appendChild(addBtn);
+
   _startTicker();
 }
 

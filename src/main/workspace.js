@@ -125,6 +125,28 @@ function removeProject(projectPath) {
 }
 
 /**
+ * Reorder the active workspace's projects to match the given list of paths.
+ * Paths not present in `orderedPaths` keep their relative order at the end, so a
+ * stale/partial order never drops projects.
+ */
+function reorderProjects(orderedPaths) {
+  if (!Array.isArray(orderedPaths)) return;
+  const workspace = loadWorkspace();
+  const active = workspace.activeWorkspace;
+  const projects = workspace.workspaces[active].projects;
+
+  const rank = new Map(orderedPaths.map((p, i) => [p, i]));
+  const next = orderedPaths.length;
+  workspace.workspaces[active].projects = [...projects].sort((a, b) => {
+    const ra = rank.has(a.path) ? rank.get(a.path) : next;
+    const rb = rank.has(b.path) ? rank.get(b.path) : next;
+    return ra - rb;
+  });
+
+  saveWorkspace(workspace);
+}
+
+/**
  * Update project's last opened timestamp
  */
 function updateProjectLastOpened(projectPath) {
@@ -176,6 +198,12 @@ function setupIPC(ipcMain) {
     const projects = getProjects();
     event.sender.send(IPC.WORKSPACE_UPDATED, projects);
   });
+
+  ipcMain.on(IPC.REORDER_WORKSPACE_PROJECTS, (event, orderedPaths) => {
+    reorderProjects(orderedPaths);
+    // No WORKSPACE_UPDATED echo: the renderer already applied the new order
+    // optimistically, and re-rendering mid-drag would fight the user.
+  });
 }
 
 module.exports = {
@@ -184,6 +212,7 @@ module.exports = {
   getProjects,
   addProject,
   removeProject,
+  reorderProjects,
   updateProjectLastOpened,
   updateProjectFrameStatus,
   setupIPC

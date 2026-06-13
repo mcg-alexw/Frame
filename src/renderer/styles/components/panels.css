@@ -2336,10 +2336,33 @@
 }
 
 /* Initialize Frame Modal */
+.init-modal-lead {
+  margin: 0 0 var(--space-md) 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
 .init-modal-description {
   margin: 0 0 var(--space-md) 0;
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+/* "Don't ask again" checkbox sits left of the footer buttons. */
+.init-modal-dontask {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.init-modal-dontask input {
+  cursor: pointer;
 }
 
 .init-modal-file-list {

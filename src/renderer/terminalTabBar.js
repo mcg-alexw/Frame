@@ -181,9 +181,6 @@ class TerminalTabBar {
             <span class="usage-reset"></span>
           </div>
         </div>
-        <button class="btn-new-terminal" title="New Frame - Click to select shell, Right-click for default">
-          ${lucideIcon(Plus)}
-        </button>
         <select class="grid-layout-select" title="Layout">
           <option value="1x1" selected>1×1</option>
           <option value="1x2">1×2</option>
@@ -198,9 +195,6 @@ class TerminalTabBar {
         <button class="btn-update-notify" title="Check for updates" style="display:none;position:relative;">
           ${lucideIcon(Bell)}
           <span class="update-badge"></span>
-        </button>
-        <button class="btn-tasks-toggle" title="Tasks dashboard">
-          ${lucideIcon(CheckSquare)}
         </button>
         <button class="btn-more-toggle" title="More panels">
           ${lucideIcon(MoreHorizontal)}
@@ -225,16 +219,6 @@ class TerminalTabBar {
     const layoutSelect = this.element.querySelector('.grid-layout-select');
     layoutSelect.style.display = state.viewMode === 'detail' ? 'inline-block' : 'none';
     layoutSelect.value = state.gridLayout || '1x1';
-
-    // Disable new lane button when no project is selected or at max
-    const newBtn = this.element.querySelector('.btn-new-terminal');
-    const noProject = !state.currentProjectPath;
-    newBtn.disabled = noProject || state.terminals.length >= this.manager.maxTerminals;
-    newBtn.title = noProject
-      ? 'Select a project first'
-      : newBtn.disabled
-        ? `Maximum frames (${this.manager.maxTerminals}) reached for this project`
-        : 'New Frame (Ctrl+Shift+T)';
   }
 
   /**
@@ -306,21 +290,6 @@ class TerminalTabBar {
       }
     });
 
-    // New lane button - click to show shell selection, or right-click for default shell
-    const newTerminalBtn = this.element.querySelector('.btn-new-terminal');
-    newTerminalBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const rect = newTerminalBtn.getBoundingClientRect();
-      this._showShellMenu(rect.left, rect.bottom + 4);
-    });
-
-    // Right-click on + button to create lane with default shell quickly
-    newTerminalBtn.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this._createLane();
-    });
-
     // Layout selector (1×1 single terminal ↔ multi-cell layouts)
     this.element.querySelector('.grid-layout-select').addEventListener('change', (e) => {
       this.manager.setGridLayout(e.target.value);
@@ -330,16 +299,6 @@ class TerminalTabBar {
     this.element.querySelector('.claude-usage-bars').addEventListener('click', () => {
       ipcRenderer.send(IPC.REFRESH_CLAUDE_USAGE);
     });
-
-    // Standalone Tasks button — opens the full Tasks dashboard (the side
-    // panel is retired; Home's lane rail already covers the at-a-glance view)
-    const tasksBtn = this.element.querySelector('.btn-tasks-toggle');
-    if (tasksBtn) {
-      tasksBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        tasksDashboard.toggle();
-      });
-    }
 
     // More menu toggle button
     const moreBtn = this.element.querySelector('.btn-more-toggle');
@@ -546,6 +505,12 @@ class TerminalTabBar {
         icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>`,
         action: () => specsDashboard.toggle(),
         key: 'specs'
+      },
+      {
+        label: 'Tasks',
+        icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+        action: () => tasksDashboard.toggle(),
+        key: 'tasks'
       },
       {
         label: 'Claude',

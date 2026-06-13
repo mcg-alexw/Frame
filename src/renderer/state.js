@@ -18,6 +18,10 @@ let onFrameInitializedCallbacks = [];
 let onSampleChangeCallbacks = [];
 let multiTerminalUI = null; // Reference to MultiTerminalUI instance
 
+// Project paths the user chose to stop being prompted about ("Don't ask again").
+// In-memory only — cleared on restart, so the prompt returns next launch.
+const frameInitPromptSuppressed = new Set();
+
 // UI Elements
 let pathElement = null;
 let startClaudeBtn = null;
@@ -36,6 +40,10 @@ function init(elements) {
   setupIPC();
   setupInitFrameModalListeners();
   setupSpotlightListeners();
+
+  // Render the initial (no-project) state so the section shows its empty-state
+  // CTA and hides the body until a project is opened.
+  updateProjectUI();
 
   // Cache the sample project path so we can detect when the user is
   // inside the sample without an IPC round-trip on every project switch.
@@ -121,6 +129,14 @@ function setIsFrameProject(isFrame) {
 
   // Notify listeners
   onFrameStatusChangeCallbacks.forEach(cb => cb(isFrame));
+
+  // When we land on a non-Frame project, offer to initialize it — unless it's
+  // the bundled sample or the user already said "Don't ask again" this session.
+  if (!isFrame && currentProjectPath
+      && !isCurrentProjectSample
+      && !frameInitPromptSuppressed.has(currentProjectPath)) {
+    showInitializeFrameModal();
+  }
 }
 
 /**
@@ -167,6 +183,9 @@ function initializeAsFrameProject() {
 function showInitializeFrameModal() {
   const modal = document.getElementById('initialize-frame-modal');
   if (modal) {
+    // Reset the "Don't ask again" checkbox each time the prompt opens.
+    const dontAsk = document.getElementById('init-frame-dontask');
+    if (dontAsk) dontAsk.checked = false;
     modal.classList.add('visible');
   }
 }
@@ -179,6 +198,19 @@ function hideInitializeFrameModal() {
   if (modal) {
     modal.classList.remove('visible');
   }
+}
+
+/**
+ * Dismiss the prompt without initializing ("Not Now" / close / Escape /
+ * backdrop). If "Don't ask again" is checked, suppress the prompt for the
+ * current project for the rest of this session.
+ */
+function dismissInitPrompt() {
+  const dontAsk = document.getElementById('init-frame-dontask');
+  if (dontAsk && dontAsk.checked && currentProjectPath) {
+    frameInitPromptSuppressed.add(currentProjectPath);
+  }
+  hideInitializeFrameModal();
 }
 
 /**
@@ -205,18 +237,18 @@ function setupInitFrameModalListeners() {
   const cancelBtn = document.getElementById('init-frame-cancel');
   const confirmBtn = document.getElementById('init-frame-confirm');
 
-  if (closeBtn) closeBtn.addEventListener('click', hideInitializeFrameModal);
-  if (cancelBtn) cancelBtn.addEventListener('click', hideInitializeFrameModal);
+  if (closeBtn) closeBtn.addEventListener('click', dismissInitPrompt);
+  if (cancelBtn) cancelBtn.addEventListener('click', dismissInitPrompt);
   if (confirmBtn) confirmBtn.addEventListener('click', handleInitializeFrame);
 
   if (modal) {
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) hideInitializeFrameModal();
+      if (e.target === modal) dismissInitPrompt();
     });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && modal.classList.contains('visible')) {
-        hideInitializeFrameModal();
+        dismissInitPrompt();
       }
     });
   }
@@ -230,6 +262,9 @@ function showInitSpotlight() {
 
   const overlay = document.getElementById('spotlight-overlay');
   if (!overlay || !initializeFrameBtn) return;
+  // The init-frame button is currently parked in a hidden holder; don't try to
+  // spotlight an off-screen element (offsetParent is null when hidden).
+  if (!initializeFrameBtn.offsetParent) return;
 
   // Wait for button to render and be positioned
   setTimeout(() => {
@@ -317,31 +352,22 @@ function setupSpotlightListeners() {
  * Update project UI elements
  */
 function updateProjectUI() {
+  const filesEmpty = document.getElementById('files-empty-state');
   if (currentProjectPath) {
-    if (pathElement) {
-      pathElement.textContent = currentProjectPath;
-      pathElement.style.color = '#569cd6';
-    }
     if (startClaudeBtn) {
       startClaudeBtn.disabled = false;
     }
     if (fileExplorerHeader) {
       fileExplorerHeader.style.display = 'block';
     }
-    const filesEmpty = document.getElementById('files-empty-state');
     if (filesEmpty) filesEmpty.style.display = 'none';
   } else {
-    if (pathElement) {
-      pathElement.textContent = 'No project selected';
-      pathElement.style.color = '#666';
-    }
     if (startClaudeBtn) {
       startClaudeBtn.disabled = true;
     }
     if (fileExplorerHeader) {
       fileExplorerHeader.style.display = 'none';
     }
-    const filesEmpty = document.getElementById('files-empty-state');
     if (filesEmpty) filesEmpty.style.display = '';
   }
 }

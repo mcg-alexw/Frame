@@ -7,7 +7,7 @@ const STORAGE_KEY = 'sidebar-width';
 const HIDDEN_KEY = 'sidebar-hidden';
 const MIN_WIDTH = 180;
 const MAX_WIDTH = 500;
-const DEFAULT_WIDTH = 260;
+const DEFAULT_WIDTH = 280;
 
 let sidebar = null;
 let isHidden = false;

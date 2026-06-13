@@ -58,3 +58,6 @@
 
 /* 17. Task Section (pinned task detail surface) */
 @import 'components/task-section.css';
+
+/* 18. Projects Section (pinned project switcher + Open Project modal) */
+@import 'components/project-section.css';

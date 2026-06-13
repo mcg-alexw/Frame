@@ -921,6 +921,39 @@
   padding: 4px 10px 10px;
 }
 
+/* New Frame CTA in the Frames rail — same accent treatment as Add new Project. */
+.lane-rail-add-btn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 10px 10px;
+  padding: 8px;
+  background: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  color: var(--bg-deep);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--transition-fast), transform 0.08s, box-shadow var(--transition-fast);
+}
+
+.lane-rail-add-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: var(--shadow-sm);
+}
+
+.lane-rail-add-btn:active {
+  transform: scale(0.99);
+}
+
+.lane-rail-add-btn svg {
+  flex-shrink: 0;
+}
+
 .lane-detail-item.active-lane {
   background: var(--bg-hover);
   border-color: var(--border-subtle);
