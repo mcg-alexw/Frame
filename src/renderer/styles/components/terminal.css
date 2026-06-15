@@ -39,7 +39,9 @@
 .terminal-tab-actions button {
   background: transparent;
   border: none;
-  color: var(--text-tertiary);
+  /* Match the sidebar rail / right-panel strip icons: secondary at rest,
+     primary on hover (below). */
+  color: var(--text-secondary);
   cursor: pointer;
   width: 32px;
   height: 32px;

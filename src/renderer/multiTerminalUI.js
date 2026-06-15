@@ -19,6 +19,7 @@ const laneDetailRail = require('./laneDetailRail');
 const overviewPanel = require('./overviewPanel');
 const taskSection = require('./taskSection');
 const specSection = require('./specSection');
+const diffSection = require('./diffSection');
 
 class MultiTerminalUI {
   constructor(containerId) {
@@ -94,6 +95,7 @@ class MultiTerminalUI {
     // collection and what the content area shows. Several can be open at once.
     taskSection.setHost(this);
     specSection.setHost(this);
+    diffSection.setHost(this);
 
     // Listen for state changes
     this.manager.onStateChange = (state) => this._onStateChange(state);
@@ -333,7 +335,12 @@ class MultiTerminalUI {
   _detailRailCallbacks() {
     return {
       onEnterLane: (terminalId) => this.enterLane(terminalId),
-      onLayoutChange: () => setTimeout(() => this.manager.fitAll(), 60)
+      onLayoutChange: () => setTimeout(() => this.manager.fitAll(), 60),
+      onNewLane: () => {
+        this.createTerminalForCurrentProject().then((id) => {
+          if (id) this.enterLane(id);
+        });
+      }
     };
   }
 
@@ -529,6 +536,18 @@ class MultiTerminalUI {
    */
   getManager() {
     return this.manager;
+  }
+
+  /**
+   * True only when a Frame's terminal is the surface on screen — not the lane
+   * board, an open section (task/spec) viewport, or the overview. Used by the
+   * sidebar launch shortcut to decide between "start in the focused Frame" and
+   * "open a new Frame".
+   */
+  isViewingFrame() {
+    return this.manager.viewMode === 'detail'
+      && !this.isSectionVisible
+      && !this.isOverviewVisible;
   }
 
   /**

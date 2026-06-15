@@ -832,3 +832,26 @@ Frame is gaining native spec-driven development as a core feature (4-slice plan 
 **Spec ordering decided:** 1) `agent-dispatch` → 2) frame-starter (consumes dispatch, retires sidebar Start button) → 3) `sidebar-project-section` (independent, can go in parallel).
 
 **Artifact:** spec at `.frame/specs/agent-dispatch/spec.md` (phase: specified).
+
+---
+
+### [2026-06-13] Sidebar overhaul: activity rail + Agent view (post-spec evolution)
+
+**Context:** The `sidebar-project-section` spec shipped projects as a pinned section above [Files | Changes] tabs. In this session it evolved well beyond the spec, driven by PO feedback and live iteration. Captured here because it spans many files and several deliberate decisions.
+
+**What changed:**
+- **Activity icon rail** (PO insisted Projects be its own destination): replaced the top [Files | Changes] tabs with a VS Code–style vertical icon rail **[Projects · Files · Changes · Agent]**. Icons-only + tooltips; default landing = Projects. Changes uses a **file-diff** icon (the git-branch icon is reserved for a future working-tree view).
+- **Projects view:** the full workspace list (no 3-row cap) + a prominent accent **"Add new Project"** CTA that sits where the list ends (not pinned) and opens the Open Project modal. **First project auto-opens on launch** (one-shot; skipped if a project is already active). Project rows given more vertical breathing room.
+- **Current-project dropdown** at the top of Files / Changes / Agent: shows the active project and lets you **switch project in place** (reuses `projectListUI.selectProject`), plus an "+ Open a project…" entry. Hidden on Projects (its list already highlights the active row).
+- **Agent view (new, agent-oriented):** moved the default-agent selector + **Start** out of a bottom footer into a dedicated tab (selector + full-width Start stacked for breathing room). Start = context-aware `agentDispatch.startDefaultAgent()`: on the Frames screen → focused Frame if idle, else ask **Open a new Frame / Kill & restart here**; anywhere else → new Frame. **Running Agents** = live list across **all projects**, grouped under a per-project heading (with the box icon), each row click focuses that Frame (switching project first when needed). Hover "i" explains the cross-project scope.
+- **Top bar cleanup:** removed the `+` (new frame) and Tasks buttons; **Tasks moved into the "…" more menu**. New-frame now lives as an **"Add new Frame"** button in the Frames detail rail (alongside the Home board's `+` card and Cmd+Shift+T).
+- **Home board empty state:** "No project added yet" + **"Add New Project"** → opens the Open Project modal (same flow as the sidebar), replacing the old direct folder picker.
+- **Project status badges:** Bot agent icon + filled colour pills + a custom hover tooltip (replaced the faint native `title`).
+- **Dark-mode readability + colour unification:** section headings → `--text-secondary` / 700 (matching the Home/Frames right-panel `.lane-rail-section-title`); sidebar rail, top-bar action icons and the right-panel strip icons all unified to **secondary at rest → primary on hover**.
+
+**Decisions worth keeping:**
+- Rail stays **icons-only** — hover-expand and an icon+text mode were both considered and rejected as overengineering (tooltips already label; one good default beats user prefs).
+- The Agent view is agent-oriented, but **Running Agents stays cross-project** regardless of the current-project dropdown selection (the dropdown only scopes Start / Files / Changes).
+- New-frame creation uses the **default shell** everywhere now; the old `+`'s shell-picker menu was retired with the button.
+
+**New/changed modules:** `agentPanel.js` (running-agents list); `agentDispatch.startDefaultAgent()`; `multiTerminalUI.isViewingFrame()` + `onNewLane` detail-rail callback; `projectListUI.getProjects()` + first-launch auto-select.

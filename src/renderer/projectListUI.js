@@ -5,12 +5,26 @@
 
 const { ipcRenderer } = require('electron');
 const { IPC } = require('../shared/ipcChannels');
+const { Bot } = require('lucide');
 
 let projectsListElement = null;
 let activeProjectPath = null;
 let onProjectSelectCallback = null;
 let projects = []; // Store projects list for navigation
 let focusedIndex = -1; // Currently focused project index
+// On first launch, open the first project automatically. One-shot so later
+// workspace updates never yank the user to the top of the list.
+let didInitialAutoSelect = false;
+// projectPath -> { approval, input } counts, from projectStatusBadges.
+let agentStatusMap = new Map();
+
+function lucideIcon(data, size = 12) {
+  const children = data.map(([tag, attrs]) => {
+    const attrStr = Object.entries(attrs).map(([k, v]) => `${k}="${v}"`).join(' ');
+    return `<${tag} ${attrStr}/>`;
+  }).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0">${children}</svg>`;
+}
 
 /**
  * Initialize project list UI
@@ -18,7 +32,58 @@ let focusedIndex = -1; // Currently focused project index
 function init(containerId, onSelectCallback) {
   projectsListElement = document.getElementById(containerId);
   onProjectSelectCallback = onSelectCallback;
+  setupStatusTooltip();
   setupIPC();
+}
+
+// ---- Custom hover tooltip for the agent-status badges ----
+// The native `title` tooltip is slow and faint; a fixed-positioned element
+// reads clearly and escapes the list's `overflow-y: auto` clipping.
+let statusTooltipEl = null;
+
+function ensureStatusTooltip() {
+  if (!statusTooltipEl) {
+    statusTooltipEl = document.createElement('div');
+    statusTooltipEl.className = 'project-status-tooltip';
+    document.body.appendChild(statusTooltipEl);
+  }
+  return statusTooltipEl;
+}
+
+function showStatusTooltip(badge) {
+  const text = badge.dataset.tip;
+  if (!text) return;
+  const tip = ensureStatusTooltip();
+  tip.textContent = text;
+  tip.classList.add('visible');
+
+  const r = badge.getBoundingClientRect();
+  const tr = tip.getBoundingClientRect();
+  // Right-align to the badge, clamped to the viewport; sit above when there's
+  // room, otherwise flip below.
+  let left = Math.max(8, Math.min(r.right - tr.width, window.innerWidth - tr.width - 8));
+  let top = r.top - tr.height - 6;
+  if (top < 8) top = r.bottom + 6;
+  tip.style.left = `${left}px`;
+  tip.style.top = `${top}px`;
+}
+
+function hideStatusTooltip() {
+  if (statusTooltipEl) statusTooltipEl.classList.remove('visible');
+}
+
+function setupStatusTooltip() {
+  if (!projectsListElement) return;
+  projectsListElement.addEventListener('mouseover', (e) => {
+    const badge = e.target.closest('.project-status-badge');
+    if (badge && projectsListElement.contains(badge)) showStatusTooltip(badge);
+  });
+  projectsListElement.addEventListener('mouseout', (e) => {
+    const badge = e.target.closest('.project-status-badge');
+    if (badge && !badge.contains(e.relatedTarget)) hideStatusTooltip();
+  });
+  // The hovered badge may scroll out or be re-rendered without a mouseout.
+  projectsListElement.addEventListener('scroll', hideStatusTooltip, { passive: true });
 }
 
 /**
@@ -45,23 +110,25 @@ function renderProjects(projectsList) {
     return;
   }
 
-  // Sort by lastOpenedAt (most recent first), then by name
-  const sortedProjects = [...projectsList].sort((a, b) => {
-    if (a.lastOpenedAt && b.lastOpenedAt) {
-      return new Date(b.lastOpenedAt) - new Date(a.lastOpenedAt);
-    }
-    if (a.lastOpenedAt) return -1;
-    if (b.lastOpenedAt) return 1;
-    return a.name.localeCompare(b.name);
-  });
+  // Render in the workspace's stored order — the user controls it by dragging
+  // (persisted via REORDER_WORKSPACE_PROJECTS). No recency auto-sort.
+  projects = [...projectsList];
 
-  // Store sorted projects for navigation
-  projects = sortedProjects;
-
-  sortedProjects.forEach((project, index) => {
+  projects.forEach((project, index) => {
     const projectItem = createProjectItem(project, index);
     projectsListElement.appendChild(projectItem);
   });
+
+  // First launch with nothing selected yet: open the top project so the app
+  // doesn't start on an empty context. Skipped if a project is already active
+  // (e.g. restored), and only ever runs once.
+  if (!didInitialAutoSelect && !activeProjectPath && projects.length > 0) {
+    didInitialAutoSelect = true;
+    selectProject(projects[0].path);
+  }
+
+  // Keep the active project visible even if it sits below the 3-row fold.
+  scrollActiveIntoView();
 
   // Update focused index based on active project
   focusedIndex = projects.findIndex(p => p.path === activeProjectPath);
@@ -76,16 +143,27 @@ function createProjectItem(project, index) {
   item.dataset.path = project.path;
   item.dataset.index = index;
   item.tabIndex = 0; // Make focusable
+  item.draggable = true; // Reorderable via drag
 
   if (project.path === activeProjectPath) {
     item.classList.add('active');
   }
 
-  // Project icon
-  const icon = document.createElement('span');
-  icon.className = 'project-icon';
-  icon.textContent = project.isFrameProject ? '📦' : '📁';
-  item.appendChild(icon);
+  attachDragHandlers(item);
+
+  // Leading marker: Frame projects get a FRAME tag in place of the icon;
+  // everything else keeps the file icon. (No separate right-side badge.)
+  if (project.isFrameProject) {
+    const tag = document.createElement('span');
+    tag.className = 'project-frame-tag';
+    tag.textContent = 'FRAME';
+    item.appendChild(tag);
+  } else {
+    const icon = document.createElement('span');
+    icon.className = 'project-icon';
+    icon.textContent = '📁';
+    item.appendChild(icon);
+  }
 
   // Project name
   const name = document.createElement('span');
@@ -94,13 +172,12 @@ function createProjectItem(project, index) {
   name.title = project.path;
   item.appendChild(name);
 
-  // Frame badge
-  if (project.isFrameProject) {
-    const badge = document.createElement('span');
-    badge.className = 'frame-badge';
-    badge.textContent = 'Frame';
-    item.appendChild(badge);
-  }
+  // Agent status badges (needs-approval / waiting-for-input in this project's
+  // background terminals). Populated from the latest status map.
+  const status = document.createElement('span');
+  status.className = 'project-status';
+  renderItemStatus(status, agentStatusMap.get(project.path));
+  item.appendChild(status);
 
   // Remove button (visible on hover)
   const removeBtn = document.createElement('button');
@@ -119,6 +196,105 @@ function createProjectItem(project, index) {
   });
 
   return item;
+}
+
+/**
+ * Render the agent status badges for one project into its status container.
+ * `counts` is { approval, input } or undefined (no attention-worthy agents).
+ */
+function renderItemStatus(container, counts) {
+  const approval = counts ? counts.approval : 0;
+  const input = counts ? counts.input : 0;
+  let html = '';
+  if (approval > 0) {
+    const label = `${approval} agent${approval > 1 ? 's' : ''} need approval`;
+    html += `<span class="project-status-badge approval" data-tip="${label}" aria-label="${label}">`
+      + `${lucideIcon(Bot, 12)}<span class="project-status-count">${approval}</span></span>`;
+  }
+  if (input > 0) {
+    const label = `${input} agent${input > 1 ? 's' : ''} waiting for input`;
+    html += `<span class="project-status-badge input" data-tip="${label}" aria-label="${label}">`
+      + `${lucideIcon(Bot, 12)}<span class="project-status-count">${input}</span></span>`;
+  }
+  container.innerHTML = html;
+}
+
+/**
+ * Apply per-project agent status counts (from projectStatusBadges) to the
+ * currently-rendered items. Stored so re-renders keep the badges.
+ */
+function applyAgentStatuses(map) {
+  agentStatusMap = map || new Map();
+  if (!projectsListElement) return;
+  hideStatusTooltip();
+  projectsListElement.querySelectorAll('.project-item').forEach((item) => {
+    const status = item.querySelector('.project-status');
+    if (status) renderItemStatus(status, agentStatusMap.get(item.dataset.path));
+  });
+}
+
+/**
+ * Wire HTML5 drag-and-drop reordering onto a project item. Dragging an item
+ * live-reorders the DOM; on drop the new order is persisted to the workspace.
+ */
+function attachDragHandlers(item) {
+  item.addEventListener('dragstart', (e) => {
+    item.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    // setData is required for the drag to initiate in some Chromium builds.
+    try { e.dataTransfer.setData('text/plain', item.dataset.path); } catch (_) {}
+  });
+
+  item.addEventListener('dragend', () => {
+    item.classList.remove('dragging');
+    persistOrder();
+  });
+
+  item.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const dragging = projectsListElement.querySelector('.project-item.dragging');
+    if (!dragging || dragging === item) return;
+    const rect = item.getBoundingClientRect();
+    const after = (e.clientY - rect.top) / rect.height > 0.5;
+    if (after) {
+      item.after(dragging);
+    } else {
+      item.before(dragging);
+    }
+  });
+}
+
+/**
+ * Read the current DOM order, sync the in-memory list, and persist it.
+ */
+function persistOrder() {
+  if (!projectsListElement) return;
+  const order = [...projectsListElement.querySelectorAll('.project-item')]
+    .map((el) => el.dataset.path);
+  if (order.length === 0) return;
+
+  // Re-sync the local `projects` array (used for keyboard nav) to the new order.
+  const rank = new Map(order.map((p, i) => [p, i]));
+  projects.sort((a, b) => (rank.get(a.path) ?? 0) - (rank.get(b.path) ?? 0));
+  projects.forEach((p, i) => {
+    const el = projectsListElement.querySelector(`.project-item[data-path="${CSS.escape(p.path)}"]`);
+    if (el) el.dataset.index = i;
+  });
+  focusedIndex = projects.findIndex((p) => p.path === activeProjectPath);
+
+  ipcRenderer.send(IPC.REORDER_WORKSPACE_PROJECTS, order);
+}
+
+/**
+ * Scroll the active project item into view within the (max-3-row) list.
+ */
+function scrollActiveIntoView() {
+  if (!projectsListElement || !activeProjectPath) return;
+  const el = projectsListElement.querySelector(
+    `.project-item[data-path="${CSS.escape(activeProjectPath)}"]`
+  );
+  if (el) el.scrollIntoView({ block: 'nearest' });
 }
 
 /**
@@ -175,6 +351,8 @@ function setActiveProject(projectPath) {
       }
     });
   }
+
+  scrollActiveIntoView();
 }
 
 /**
@@ -303,6 +481,14 @@ function blur() {
   items?.forEach(item => item.classList.remove('focused'));
 }
 
+/**
+ * Snapshot of the workspace projects (used by the current-project dropdown in
+ * the Files/Changes panel). Copy so callers can't mutate internal state.
+ */
+function getProjects() {
+  return [...projects];
+}
+
 module.exports = {
   init,
   loadProjects,
@@ -310,10 +496,12 @@ module.exports = {
   selectProject,
   setActiveProject,
   getActiveProject,
+  getProjects,
   addProject,
   removeProject,
   selectNextProject,
   selectPrevProject,
   focus,
-  blur
+  blur,
+  applyAgentStatuses
 };

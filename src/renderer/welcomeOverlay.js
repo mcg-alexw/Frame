@@ -10,6 +10,7 @@
 const { ipcRenderer } = require('electron');
 const { IPC } = require('../shared/ipcChannels');
 const state = require('./state');
+const openProjectModal = require('./openProjectModal');
 
 const DISMISSED_KEY = 'onboardingDismissed';
 
@@ -94,8 +95,8 @@ function setupListeners() {
     .getElementById('welcome-clone-github')
     .addEventListener('click', () => {
       close();
-      const cloneBtn = document.getElementById('btn-clone-github');
-      if (cloneBtn) cloneBtn.click();
+      // Old inline clone row is gone; open the Open Project modal's clone form.
+      openProjectModal.open({ clone: true });
     });
 
   document.getElementById('welcome-close').addEventListener('click', () => {

@@ -151,6 +151,113 @@ async function dispatch({ terminalId = null, createNew = false, toolId = null, p
   return { success: true, terminalId: targetId, error: null };
 }
 
+/**
+ * Start the default agent (the active AI tool) from the sidebar shortcut —
+ * a prompt-less launch, unlike dispatch() which delivers a prompt.
+ *
+ * Context decides the target:
+ *   - On the Frames surface (viewMode 'detail') the focused Frame is the
+ *     target. If it's idle the agent starts right there; if it's busy
+ *     (a live agent or a foreground process) the user is asked whether to
+ *     open a new Frame or kill this one and start fresh.
+ *   - Anywhere else (Home / any other tab) it always opens a new Frame.
+ */
+async function startDefaultAgent() {
+  if (!multiTerminalUI) {
+    _showToast('Terminal system is not ready yet', 'error');
+    return;
+  }
+  if (!state.getProjectPath()) {
+    _showToast('Open a project first', 'error');
+    return;
+  }
+
+  const manager = multiTerminalUI.getManager();
+  const focusedId = manager.activeTerminalId;
+  const onFrames = multiTerminalUI.isViewingFrame() && focusedId && manager.getTerminal(focusedId);
+
+  if (!onFrames) {
+    _startAgentInNewFrame();
+    return;
+  }
+
+  const s = laneStatus.getStatus(focusedId);
+  const idle = !s.agentName && s.status === 'idle';
+  if (idle) {
+    _startAgentIn(focusedId);
+    return;
+  }
+
+  // Focused Frame is busy — let the user decide rather than clobbering it.
+  const choice = await _askNewOrRestart(_laneName(focusedId), !!s.agentName);
+  if (choice === 'cancel') return;
+  if (choice === 'restart') manager.closeTerminal(focusedId);
+  _startAgentInNewFrame();
+}
+
+// Start the active tool's CLI in an existing lane. `fresh` allows a newly
+// spawned shell a beat to accept input before the command is typed.
+function _startAgentIn(terminalId, { fresh = false } = {}) {
+  multiTerminalUI.enterLane(terminalId);
+  const startCommand = require('./aiToolSelector').getStartCommand();
+  if (!startCommand) {
+    _showToast('No AI CLI selected', 'error');
+    return;
+  }
+  setTimeout(() => multiTerminalUI.sendCommand(startCommand, terminalId), fresh ? 800 : 50);
+}
+
+async function _startAgentInNewFrame() {
+  let id = null;
+  try {
+    id = await multiTerminalUI.createTerminalForCurrentProject();
+  } catch (err) {
+    console.error('agentDispatch: terminal creation failed', err);
+  }
+  if (!id) {
+    const max = multiTerminalUI.getManager().maxTerminals;
+    _showToast(`Could not create a new Frame — maximum (${max}) may be reached for this project`, 'error');
+    return;
+  }
+  _startAgentIn(id, { fresh: true });
+}
+
+// "Open a new Frame / Kill & restart here" — asked when the focused Frame is
+// busy. Resolves 'new' | 'restart' | 'cancel'; opening a new Frame is the
+// safe default (never silently kills running work).
+function _askNewOrRestart(frameName, hasAgent) {
+  return new Promise((resolve) => {
+    const what = hasAgent ? 'a running agent' : 'a running process';
+    const overlay = document.createElement('div');
+    overlay.className = 'spec-modal-overlay';
+    overlay.innerHTML = `
+      <div class="spec-modal" role="dialog" aria-modal="true" aria-labelledby="launch-lane-title">
+        <h3 id="launch-lane-title">This Frame is busy</h3>
+        <p><strong>${_escapeHtml(frameName)}</strong> already has ${what}. Where should the agent start?</p>
+        <div class="spec-modal-actions">
+          <button type="button" class="btn btn-secondary launch-restart">Kill &amp; restart here</button>
+          <button type="button" class="btn btn-primary launch-new-frame">Open a new Frame</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const done = (choice) => {
+      overlay.remove();
+      resolve(choice);
+    };
+    overlay.querySelector('.launch-new-frame').addEventListener('click', () => done('new'));
+    overlay.querySelector('.launch-restart').addEventListener('click', () => done('restart'));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) done('cancel');
+    });
+    overlay.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') done('cancel');
+    });
+    setTimeout(() => overlay.querySelector('.launch-new-frame').focus(), 30);
+  });
+}
+
 // ─── Spec lane assignments ──────────────────────────────────
 //
 // Which lane each spec (slug) is working in. Functional state, kept
@@ -495,6 +602,7 @@ function _showToast(message, type = 'info') {
 module.exports = {
   init,
   dispatch,
+  startDefaultAgent,
   dispatchSpecCommand,
   getSpecLaneInfo,
   getTaskLaneInfo,

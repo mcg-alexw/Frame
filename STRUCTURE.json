@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Auto-generated module structure",
-  "lastUpdated": "2026-06-12",
+  "lastUpdated": "2026-06-13",
   "architecture": {},
   "modules": {
     "main/aiToolManager": {
@@ -2132,6 +2132,7 @@
         "getProjects",
         "addProject",
         "removeProject",
+        "reorderProjects",
         "updateProjectLastOpened",
         "updateProjectFrameStatus",
         "setupIPC"
@@ -2191,15 +2192,22 @@
           ],
           "purpose": "Remove project from workspace"
         },
+        "reorderProjects": {
+          "line": 132,
+          "params": [
+            "orderedPaths"
+          ],
+          "purpose": "stale/partial order never drops projects."
+        },
         "updateProjectLastOpened": {
-          "line": 130,
+          "line": 152,
           "params": [
             "projectPath"
           ],
           "purpose": "Update project's last opened timestamp"
         },
         "updateProjectFrameStatus": {
-          "line": 146,
+          "line": 168,
           "params": [
             "projectPath",
             "isFrame"
@@ -2207,7 +2215,7 @@
           "purpose": "Update project's Frame status"
         },
         "setupIPC": {
-          "line": 162,
+          "line": 184,
           "params": [
             "ipcMain"
           ],
@@ -2218,7 +2226,8 @@
         "listens": [
           "LOAD_WORKSPACE",
           "ADD_PROJECT_TO_WORKSPACE",
-          "REMOVE_PROJECT_FROM_WORKSPACE"
+          "REMOVE_PROJECT_FROM_WORKSPACE",
+          "REORDER_WORKSPACE_PROJECTS"
         ],
         "emits": [
           "WORKSPACE_DATA",
@@ -2769,7 +2778,8 @@
       "file": "src/renderer/gitChangesPanel.js",
       "description": "Git Changes Panel (Changes sidebar tab)",
       "exports": [
-        "init"
+        "init",
+        "getOrderedFiles"
       ],
       "depends": [
         "electron",
@@ -2777,54 +2787,57 @@
       ],
       "functions": {
         "init": {
-          "line": 22,
+          "line": 25,
           "params": [
             "opts = {}"
           ]
         },
         "handleStatus": {
-          "line": 53,
+          "line": 56,
           "params": [
             "payload"
           ]
         },
         "showMessage": {
-          "line": 77,
+          "line": 88,
           "params": [
             "text"
           ]
         },
         "partition": {
-          "line": 88,
+          "line": 99,
           "params": [
             "files"
           ],
           "purpose": "`staged` and `changes` (VSCode parity)."
         },
         "renderGroup": {
-          "line": 125,
+          "line": 136,
           "params": [
             "group",
             "entries"
           ]
         },
         "buildRow": {
-          "line": 143,
+          "line": 154,
           "params": [
             "entry"
           ]
         },
         "badgeChar": {
-          "line": 184,
+          "line": 195,
           "params": [
             "entry"
           ]
         },
         "normalize": {
-          "line": 196,
+          "line": 207,
           "params": [
             "ch"
           ]
+        },
+        "getOrderedFiles": {
+          "line": 213
         }
       },
       "ipc": {
@@ -3151,7 +3164,7 @@
         "terminal",
         "fileTreeUI",
         "gitChangesPanel",
-        "diffViewer",
+        "diffSection",
         "historyPanel",
         "tasksPanel",
         "tasksDashboard",
@@ -3166,6 +3179,10 @@
         "specsDashboard",
         "state",
         "projectListUI",
+        "openProjectModal",
+        "projectSection",
+        "projectStatusBadges",
+        "agentPanel",
         "editor",
         "sidebarResize",
         "aiToolSelector",
@@ -3177,30 +3194,35 @@
         "settingsModal",
         "telemetryNotice",
         "sampleBanner",
-        "../package.json"
+        "../package.json",
+        "agentDispatch"
       ],
       "functions": {
         "init": {
-          "line": 41,
+          "line": 45,
           "purpose": "Initialize all modules"
         },
         "setupButtonHandlers": {
-          "line": 207,
+          "line": 220,
           "purpose": "Setup button click handlers"
         },
+        "setupProjectSwitcher": {
+          "line": 303,
+          "purpose": "and close on outside click / Escape."
+        },
         "setupUpdateDot": {
-          "line": 320,
+          "line": 392,
           "purpose": "→ About → \"Dismiss this version\"). Both click open Settings → About."
         },
         "revealSidebarTab": {
-          "line": 351,
+          "line": 423,
           "params": [
             "tabName"
           ],
           "purpose": "commands so they don't try to focus an element inside a hidden container."
         },
         "registerCommands": {
-          "line": 370,
+          "line": 449,
           "purpose": "Command Palette and the global keyboard handler."
         }
       },
@@ -3210,8 +3232,6 @@
           "UPDATE_AVAILABLE"
         ],
         "emits": [
-          "CLONE_GITHUB_REPO",
-          "REFRESH_GIT_STATUS",
           "REFRESH_GIT_STATUS"
         ]
       }
@@ -3232,7 +3252,8 @@
         "shared/ipcChannels",
         "laneStatus",
         "laneRail",
-        "lucide"
+        "lucide",
+        "openProjectModal"
       ],
       "functions": {
         "statusLabel": {
@@ -3411,7 +3432,8 @@
         "laneDetailRail",
         "overviewPanel",
         "taskSection",
-        "specSection"
+        "specSection",
+        "diffSection"
       ],
       "functions": {}
     },
@@ -3735,47 +3757,102 @@
         "selectProject",
         "setActiveProject",
         "getActiveProject",
+        "getProjects",
         "addProject",
         "removeProject",
         "selectNextProject",
         "selectPrevProject",
         "focus",
-        "blur"
+        "blur",
+        "applyAgentStatuses"
       ],
       "depends": [
         "electron",
-        "shared/ipcChannels"
+        "shared/ipcChannels",
+        "lucide"
       ],
       "functions": {
+        "lucideIcon": {
+          "line": 21,
+          "params": [
+            "data",
+            "size = 12"
+          ]
+        },
         "init": {
-          "line": 18,
+          "line": 32,
           "params": [
             "containerId",
             "onSelectCallback"
           ],
           "purpose": "Initialize project list UI"
         },
+        "ensureStatusTooltip": {
+          "line": 44
+        },
+        "showStatusTooltip": {
+          "line": 53,
+          "params": [
+            "badge"
+          ]
+        },
+        "hideStatusTooltip": {
+          "line": 71
+        },
+        "setupStatusTooltip": {
+          "line": 75
+        },
         "loadProjects": {
-          "line": 27,
+          "line": 92,
           "purpose": "Load projects from workspace"
         },
         "renderProjects": {
-          "line": 34,
+          "line": 99,
           "params": [
             "projectsList"
           ],
           "purpose": "Render project list"
         },
         "createProjectItem": {
-          "line": 73,
+          "line": 140,
           "params": [
             "project",
             "index"
           ],
           "purpose": "Create a project item element"
         },
+        "renderItemStatus": {
+          "line": 205,
+          "params": [
+            "container",
+            "counts"
+          ],
+          "purpose": "`counts` is { approval, input } or undefined (no attention-worthy agents)."
+        },
+        "applyAgentStatuses": {
+          "line": 226,
+          "params": [
+            "map"
+          ],
+          "purpose": "currently-rendered items. Stored so re-renders keep the badges."
+        },
+        "attachDragHandlers": {
+          "line": 240,
+          "params": [
+            "item"
+          ],
+          "purpose": "live-reorders the DOM; on drop the new order is persisted to the workspace."
+        },
+        "persistOrder": {
+          "line": 271,
+          "purpose": "Read the current DOM order, sync the in-memory list, and persist it."
+        },
+        "scrollActiveIntoView": {
+          "line": 292,
+          "purpose": "Scroll the active project item into view within the (max-3-row) list."
+        },
         "confirmRemoveProject": {
-          "line": 127,
+          "line": 303,
           "params": [
             "projectPath",
             "projectName"
@@ -3783,25 +3860,25 @@
           "purpose": "Show confirmation dialog and remove project"
         },
         "selectProject": {
-          "line": 153,
+          "line": 329,
           "params": [
             "projectPath"
           ],
           "purpose": "Terminal session switching is handled by state.js via multiTerminalUI"
         },
         "setActiveProject": {
-          "line": 164,
+          "line": 340,
           "params": [
             "projectPath"
           ],
           "purpose": "Set active project (visual only)"
         },
         "getActiveProject": {
-          "line": 183,
+          "line": 361,
           "purpose": "Get active project path"
         },
         "addProject": {
-          "line": 190,
+          "line": 368,
           "params": [
             "projectPath",
             "projectName",
@@ -3810,38 +3887,42 @@
           "purpose": "Add project to workspace"
         },
         "removeProject": {
-          "line": 201,
+          "line": 379,
           "params": [
             "projectPath"
           ],
           "purpose": "Remove project from workspace"
         },
         "setupIPC": {
-          "line": 208,
+          "line": 386,
           "purpose": "Setup IPC listeners"
         },
         "selectNextProject": {
-          "line": 221,
+          "line": 399,
           "purpose": "Select next project in list"
         },
         "selectPrevProject": {
-          "line": 232,
+          "line": 410,
           "purpose": "Select previous project in list"
         },
         "focus": {
-          "line": 243,
+          "line": 421,
           "purpose": "Focus project list for keyboard navigation"
         },
         "handleKeydown": {
-          "line": 266,
+          "line": 444,
           "params": [
             "e"
           ],
           "purpose": "Handle keyboard navigation in project list"
         },
         "blur": {
-          "line": 301,
+          "line": 479,
           "purpose": "Blur/unfocus project list"
+        },
+        "getProjects": {
+          "line": 488,
+          "purpose": "the Files/Changes panel). Copy so callers can't mutate internal state."
         }
       },
       "ipc": {
@@ -3851,6 +3932,7 @@
         ],
         "emits": [
           "LOAD_WORKSPACE",
+          "REORDER_WORKSPACE_PROJECTS",
           "ADD_PROJECT_TO_WORKSPACE",
           "REMOVE_PROJECT_FROM_WORKSPACE"
         ]
@@ -4565,127 +4647,131 @@
       ],
       "functions": {
         "init": {
-          "line": 30,
+          "line": 34,
           "params": [
             "elements"
           ],
           "purpose": "Initialize state module"
         },
         "getProjectPath": {
-          "line": 55,
+          "line": 63,
           "purpose": "Get current project path"
         },
         "setMultiTerminalUI": {
-          "line": 62,
+          "line": 70,
           "params": [
             "ui"
           ],
           "purpose": "Set MultiTerminalUI reference for terminal session management"
         },
         "setProjectPath": {
-          "line": 69,
+          "line": 77,
           "params": [
             "path"
           ],
           "purpose": "Set project path and switch terminal session"
         },
         "onProjectChange": {
-          "line": 104,
+          "line": 112,
           "params": [
             "callback"
           ],
           "purpose": "Register callback for project change"
         },
         "getIsFrameProject": {
-          "line": 111,
+          "line": 119,
           "purpose": "Get Frame project status"
         },
         "setIsFrameProject": {
-          "line": 118,
+          "line": 126,
           "params": [
             "isFrame"
           ],
           "purpose": "Set Frame project status"
         },
         "onFrameStatusChange": {
-          "line": 129,
+          "line": 145,
           "params": [
             "callback"
           ],
           "purpose": "Register callback for Frame status change"
         },
         "onFrameInitialized": {
-          "line": 136,
+          "line": 152,
           "params": [
             "callback"
           ],
           "purpose": "Register callback for Frame project initialized"
         },
         "updateFrameUI": {
-          "line": 143,
+          "line": 159,
           "purpose": "Update Frame-related UI"
         },
         "initializeAsFrameProject": {
-          "line": 158,
+          "line": 174,
           "purpose": "Initialize current project as Frame project"
         },
         "showInitializeFrameModal": {
-          "line": 167,
+          "line": 183,
           "purpose": "Show custom initialize Frame modal"
         },
         "hideInitializeFrameModal": {
-          "line": 177,
+          "line": 196,
           "purpose": "Hide initialize Frame modal"
         },
+        "dismissInitPrompt": {
+          "line": 208,
+          "purpose": "current project for the rest of this session."
+        },
         "handleInitializeFrame": {
-          "line": 187,
+          "line": 219,
           "purpose": "Handle initialize Frame confirmation"
         },
         "setupInitFrameModalListeners": {
-          "line": 202,
+          "line": 234,
           "purpose": "Setup initialize Frame modal listeners"
         },
         "showInitSpotlight": {
-          "line": 228,
+          "line": 260,
           "purpose": "Show spotlight tour for the initialize button (first time only)"
         },
         "dismissSpotlight": {
-          "line": 266,
+          "line": 301,
           "purpose": "Dismiss spotlight and mark as seen"
         },
         "setupSpotlightListeners": {
-          "line": 277,
+          "line": 312,
           "purpose": "Setup spotlight tour listeners"
         },
         "updateProjectUI": {
-          "line": 319,
+          "line": 354,
           "purpose": "Update project UI elements"
         },
         "selectProjectFolder": {
-          "line": 352,
+          "line": 378,
           "purpose": "Request folder selection"
         },
         "createNewProject": {
-          "line": 359,
+          "line": 385,
           "purpose": "Request new project creation"
         },
         "openSampleProject": {
-          "line": 369,
+          "line": 395,
           "purpose": "specs) is reused unchanged."
         },
         "getIsSampleProject": {
-          "line": 376,
+          "line": 402,
           "purpose": "Check whether the current project is the bundled sample."
         },
         "onSampleChange": {
-          "line": 384,
+          "line": 410,
           "params": [
             "callback"
           ],
           "purpose": "\"is sample\" flag changes (opens or leaves the sample)."
         },
         "setupIPC": {
-          "line": 391,
+          "line": 417,
           "purpose": "Setup IPC listeners"
         }
       },
@@ -5605,48 +5691,49 @@
       "depends": [
         "electron",
         "shared/ipcChannels",
-        "state"
+        "state",
+        "openProjectModal"
       ],
       "functions": {
         "init": {
-          "line": 23
+          "line": 24
         },
         "loadAITools": {
-          "line": 53
+          "line": 54
         },
         "maybeShowOnLaunch": {
-          "line": 64
+          "line": 65
         },
         "setupListeners": {
-          "line": 71
+          "line": 72
         },
         "persistDismissPreference": {
-          "line": 132
+          "line": 133
         },
         "renderToolOptions": {
-          "line": 140
+          "line": 141
         },
         "updateToolSelection": {
-          "line": 175
+          "line": 176
         },
         "open": {
-          "line": 186
+          "line": 187
         },
         "close": {
-          "line": 192
+          "line": 193
         },
         "reopen": {
-          "line": 206,
+          "line": 207,
           "purpose": "the checkbox state from a prior session would silently re-dismiss)."
         },
         "escapeHtml": {
-          "line": 214,
+          "line": 215,
           "params": [
             "s"
           ]
         },
         "escapeAttr": {
-          "line": 223,
+          "line": 224,
           "params": [
             "s"
           ]
@@ -5966,7 +6053,7 @@
           "line": 100
         },
         "_startTicker": {
-          "line": 181
+          "line": 193
         }
       }
     },
@@ -6499,6 +6586,7 @@
       "exports": [
         "init",
         "dispatch",
+        "startDefaultAgent",
         "dispatchSpecCommand",
         "getSpecLaneInfo",
         "getTaskLaneInfo",
@@ -6533,8 +6621,31 @@
           ],
           "purpose": "running (default: current tool)"
         },
+        "startDefaultAgent": {
+          "line": 165,
+          "purpose": "- Anywhere else (Home / any other tab) it always opens a new Frame."
+        },
+        "_startAgentIn": {
+          "line": 200,
+          "params": [
+            "terminalId",
+            "{ fresh = false } = {}"
+          ],
+          "purpose": "spawned shell a beat to accept input before the command is typed."
+        },
+        "_startAgentInNewFrame": {
+          "line": 210
+        },
+        "_askNewOrRestart": {
+          "line": 228,
+          "params": [
+            "frameName",
+            "hasAgent"
+          ],
+          "purpose": "safe default (never silently kills running work)."
+        },
         "dispatchSpecCommand": {
-          "line": 178,
+          "line": 285,
           "params": [
             "{ slug",
             "title = null",
@@ -6542,79 +6653,79 @@
           ]
         },
         "getSpecLaneInfo": {
-          "line": 242,
+          "line": 349,
           "params": [
             "slug"
           ],
           "purpose": "states fail open on purpose."
         },
         "getTaskLaneInfo": {
-          "line": 261,
+          "line": 368,
           "params": [
             "taskId"
           ],
           "purpose": "requires a live agent process."
         },
         "specStatusDotHtml": {
-          "line": 282,
+          "line": 389,
           "params": [
             "slug"
           ],
           "purpose": "Presentation helpers kept here so all surfaces share one mapping."
         },
         "taskStatusDotHtml": {
-          "line": 286,
+          "line": 393,
           "params": [
             "taskId"
           ]
         },
         "_activityDotHtml": {
-          "line": 290,
+          "line": 397,
           "params": [
             "info"
           ]
         },
         "onSpecLaneActivity": {
-          "line": 307,
+          "line": 414,
           "params": [
             "callback"
           ],
           "purpose": "Returns an unsubscribe function."
         },
         "_notifySpecLane": {
-          "line": 315,
+          "line": 422,
           "params": [
             "slug"
           ]
         },
         "onTaskLaneActivity": {
-          "line": 335,
+          "line": 442,
           "params": [
             "callback"
           ],
           "purpose": "Returns an unsubscribe function."
         },
         "_notifyTaskLane": {
-          "line": 343,
+          "line": 450,
           "params": [
             "taskId"
           ]
         },
         "_assignedLane": {
-          "line": 361,
+          "line": 468,
           "params": [
             "slug"
           ],
           "purpose": "lane means the spec is unassigned again."
         },
         "_laneName": {
-          "line": 371,
+          "line": 478,
           "params": [
             "terminalId"
           ]
         },
         "_askContinueOrNew": {
-          "line": 380,
+          "line": 487,
           "params": [
             "frameName",
             "specName"
@@ -6622,20 +6733,20 @@
           "purpose": "Resolves 'continue' | 'new' | 'cancel'; continue is the default action."
         },
         "_escapeHtml": {
-          "line": 412,
+          "line": 519,
           "params": [
             "s"
           ]
         },
         "_waitForAgentReady": {
-          "line": 431,
+          "line": 538,
           "params": [
             "terminalId"
           ],
           "purpose": "the prompt to a y/n chooser, so those lanes time out instead."
         },
         "_fail": {
-          "line": 466,
+          "line": 573,
           "params": [
             "terminalId",
             "message"
@@ -6643,7 +6754,7 @@
           "purpose": "for what is presentation-only."
         },
         "_showToast": {
-          "line": 471,
+          "line": 578,
           "params": [
             "message",
             "type = 'info'"
@@ -6653,6 +6764,247 @@
       "ipc": {
         "listens": [
           "TERMINAL_DESTROYED"
+        ],
+        "emits": []
+      }
+    },
+    "renderer/openProjectModal": {
+      "file": "src/renderer/openProjectModal.js",
+      "description": "Open Project Modal",
+      "exports": [
+        "init",
+        "open",
+        "close",
+        "isVisible",
+        "handleCloneResult"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels",
+        "state"
+      ],
+      "functions": {
+        "open": {
+          "line": 29,
+          "params": [
+            "opts = {}"
+          ],
+          "purpose": "(used by the welcome overlay's \"Clone GitHub\" entry point)."
+        },
+        "close": {
+          "line": 39,
+          "purpose": "Hide the modal and reset the clone form."
+        },
+        "isVisible": {
+          "line": 45
+        },
+        "resetCloneForm": {
+          "line": 52,
+          "purpose": "Collapse the clone form back to the option list and clear its state."
+        },
+        "showCloneForm": {
+          "line": 65,
+          "purpose": "Reveal the in-modal clone URL form and focus the input."
+        },
+        "submitClone": {
+          "line": 80,
+          "purpose": "Send the clone request for the current URL value (if any)."
+        },
+        "handleCloneResult": {
+          "line": 92,
+          "params": [
+            "result"
+          ],
+          "purpose": "Returns true if it consumed the result (modal handled the feedback)."
+        },
+        "init": {
+          "line": 109,
+          "purpose": "Wire all modal controls. Safe to call once at startup."
+        }
+      },
+      "ipc": {
+        "listens": [],
+        "emits": [
+          "CLONE_GITHUB_REPO"
+        ]
+      }
+    },
+    "renderer/projectSection": {
+      "file": "src/renderer/projectSection.js",
+      "description": "Projects Section",
+      "exports": [
+        "init",
+        "focusList"
+      ],
+      "depends": [
+        "openProjectModal",
+        "projectListUI"
+      ],
+      "functions": {
+        "focusList": {
+          "line": 19,
+          "purpose": "command."
+        },
+        "init": {
+          "line": 23
+        }
+      }
+    },
+    "renderer/projectStatusBadges": {
+      "file": "src/renderer/projectStatusBadges.js",
+      "description": "Project Status Badges",
+      "exports": [
+        "init",
+        "recompute"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels",
+        "laneStatus",
+        "projectListUI"
+      ],
+      "functions": {
+        "init": {
+          "line": 28,
+          "params": [
+            "multiTerminalUI"
+          ]
+        },
+        "schedule": {
+          "line": 39
+        },
+        "recompute": {
+          "line": 51,
+          "purpose": "Tally attention-worthy agent statuses per project and push to the list."
+        }
+      },
+      "ipc": {
+        "listens": [
+          "TERMINAL_DESTROYED"
+        ],
+        "emits": []
+      }
+    },
+    "renderer/agentPanel": {
+      "file": "src/renderer/agentPanel.js",
+      "description": "Agent Panel",
+      "exports": [
+        "init",
+        "recompute"
+      ],
+      "depends": [
+        "electron",
+        "shared/ipcChannels",
+        "laneStatus",
+        "state",
+        "projectListUI"
+      ],
+      "functions": {
+        "init": {
+          "line": 35,
+          "params": [
+            "ui"
+          ]
+        },
+        "schedule": {
+          "line": 47
+        },
+        "recompute": {
+          "line": 60,
+          "purpose": "grouped under a heading per project (active project first)."
+        },
+        "_buildRow": {
+          "line": 124,
+          "params": [
+            "a"
+          ],
+          "purpose": "sub-line is just the Frame name."
+        },
+        "_projectNames": {
+          "line": 146,
+          "purpose": "path -> the workspace's display name for that project (fallback: basename)."
+        },
+        "_focus": {
+          "line": 157,
+          "params": [
+            "a"
+          ],
+          "purpose": "so the lane is in view before we enter it."
+        },
+        "_label": {
+          "line": 165,
+          "params": [
+            "agentName"
+          ]
+        },
+        "_basename": {
+          "line": 169,
+          "params": [
+            "p"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "TERMINAL_DESTROYED"
+        ],
+        "emits": []
+      }
+    },
+    "renderer/diffSection": {
+      "file": "src/renderer/diffSection.js",
+      "description": "Diff Section Module",
+      "exports": [],
+      "depends": [
+        "electron",
+        "diff2html",
+        "shared/ipcChannels",
+        "lucide",
+        "gitChangesPanel"
+      ],
+      "functions": {
+        "lucideIcon": {
+          "line": 23,
+          "params": [
+            "data",
+            "size = 16"
+          ]
+        },
+        "setHost": {
+          "line": 31,
+          "params": [
+            "h"
+          ]
+        },
+        "open": {
+          "line": 40,
+          "params": [
+            "ref"
+          ],
+          "purpose": "it) or creates one if none."
+        },
+        "createViewport": {
+          "line": 45
+        },
+        "_orderedFiles": {
+          "line": 191
+        },
+        "_basename": {
+          "line": 199,
+          "params": [
+            "p"
+          ]
+        },
+        "_escape": {
+          "line": 205,
+          "params": [
+            "text"
+          ]
+        }
+      },
+      "ipc": {
+        "listens": [
+          "GIT_STATUS_DATA"
         ],
         "emits": []
       }
@@ -6871,6 +7223,11 @@
       },
       "TERMINAL_PROCESS_DATA": {
         "name": "terminal-process-data",
+        "direction": "",
+        "description": ""
+      },
+      "REORDER_WORKSPACE_PROJECTS": {
+        "name": "reorder-workspace-projects",
         "direction": "",
         "description": ""
       }
@@ -7250,6 +7607,13 @@
   "files": {},
   "conventions": {},
   "intentIndex": {
+    "agent": [
+      {
+        "module": "renderer/agentPanel",
+        "file": "src/renderer/agentPanel.js",
+        "description": "Agent Panel"
+      }
+    ],
     "agent-dispatch": [
       {
         "module": "renderer/agentDispatch",
@@ -7323,6 +7687,13 @@
         "module": "main/dialogs",
         "file": "src/main/dialogs.js",
         "description": "Dialogs Module"
+      }
+    ],
+    "diff-section": [
+      {
+        "module": "renderer/diffSection",
+        "file": "src/renderer/diffSection.js",
+        "description": "Diff Section Module"
       }
     ],
     "diff-viewer": [
@@ -7493,6 +7864,13 @@
         "description": "Google OAuth — Passport strategy + routes"
       }
     ],
+    "open-project-modal": [
+      {
+        "module": "renderer/openProjectModal",
+        "file": "src/renderer/openProjectModal.js",
+        "description": "Open Project Modal"
+      }
+    ],
     "overview": [
       {
         "module": "main/overviewManager",
@@ -7522,6 +7900,20 @@
         "module": "renderer/pluginsPanel",
         "file": "src/renderer/pluginsPanel.js",
         "description": "Plugins Panel Module"
+      }
+    ],
+    "project-section": [
+      {
+        "module": "renderer/projectSection",
+        "file": "src/renderer/projectSection.js",
+        "description": "Projects Section"
+      }
+    ],
+    "project-status-badges": [
+      {
+        "module": "renderer/projectStatusBadges",
+        "file": "src/renderer/projectStatusBadges.js",
+        "description": "Project Status Badges"
       }
     ],
     "prompts": [

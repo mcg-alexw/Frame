@@ -1,6 +1,6 @@
 /* ==================== SIDEBAR ==================== */
 #sidebar {
-  width: 260px;
+  width: 280px;
   min-width: 180px;
   max-width: 500px;
   background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
@@ -75,7 +75,9 @@ body.sidebar-resizing * {
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.3px;
-  margin-bottom: var(--space-xl);
+  /* Tightened so the Projects section lines up with the bottom edge of the
+     main panel's "Home" top bar (~62px from the top). */
+  margin-bottom: 16px;
   padding: var(--space-xs) 0;
   display: flex;
   align-items: center;
@@ -118,6 +120,93 @@ body.sidebar-resizing * {
 @keyframes update-dot-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
+}
+
+/* Default-agent card — sidebar footer. The active AI tool is a global,
+   low-frequency preference, so it lives at the bottom of the sidebar (out of
+   the project list / file tree) and stays reachable on any tab. Styled as a
+   small card with a labelled header + full-width selector so it reads clearly
+   as a setting. */
+.sidebar-agent-footer {
+  flex-shrink: 0;
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-sm) 10px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.sidebar-agent-footer-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebar-agent-footer-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.sidebar-agent-footer-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Selector + Start button on one row. */
+.sidebar-agent-footer-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-xs);
+}
+
+/* The selector reuses .ai-tool-select for its theming, but here it stands
+   alone (not glued to a button via shared borders), so restore its full
+   border + radius and let it grow. */
+.sidebar-agent-footer .ai-tool-select {
+  flex: 1;
+  min-width: 0;
+  border-left: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* Start button — the launch shortcut; accent-filled so the primary action
+   reads clearly. */
+.sidebar-agent-launch {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary);
+  color: var(--bg-deep);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--transition-fast), transform 0.08s;
+}
+
+.sidebar-agent-launch svg {
+  flex-shrink: 0;
+}
+
+.sidebar-agent-launch:hover {
+  filter: brightness(1.08);
+}
+
+.sidebar-agent-launch:active {
+  transform: scale(0.97);
 }
 
 /* Update banner — sidebar footer card, primary signal when an update is available */
@@ -207,7 +296,7 @@ body.sidebar-resizing * {
 .sidebar-tabs {
   display: flex;
   gap: 0;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
@@ -241,6 +330,488 @@ body.sidebar-resizing * {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+}
+
+/* ---- Activity rail + panel ----
+   The sidebar body is split into a thin vertical icon rail (Projects / Files /
+   Changes) and the active view's panel, editor-style. */
+#sidebar-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-sm);
+}
+
+.sidebar-rail {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: var(--space-xs);
+  border-right: 1px solid var(--border-subtle);
+}
+
+/* Rail buttons reuse .sidebar-tab-btn theming hooks but are square icons in a
+   column — override the horizontal-tab geometry. */
+.sidebar-rail-btn {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  /* Same treatment as the right-panel strip icons (.lane-rail-strip-btn):
+     secondary at rest, primary on hover — readable in both themes. */
+  color: var(--text-secondary);
+}
+
+.sidebar-rail-btn svg {
+  display: block;
+}
+
+.sidebar-rail-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.sidebar-rail-btn.active {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  border-bottom: none;
+}
+
+.sidebar-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Current-project dropdown — compact switcher at the top of Files / Changes. */
+.sidebar-current-project-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  margin-bottom: var(--space-sm);
+}
+
+.sidebar-current-project {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px var(--space-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-current-project:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.sidebar-current-project-icon {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.sidebar-current-project-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-current-project-caret {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.sidebar-current-project[aria-expanded="true"] .sidebar-current-project-caret {
+  transform: rotate(180deg);
+}
+
+/* Dropdown menu of projects to switch to. */
+.sidebar-project-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-project-menu[hidden] {
+  display: none;
+}
+
+.sidebar-project-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px var(--space-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.sidebar-project-menu-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-project-menu-item.active {
+  color: var(--accent-primary);
+}
+
+.sidebar-project-menu-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-project-menu-item-check {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.sidebar-project-menu-tag {
+  flex-shrink: 0;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--bg-deep);
+  background: var(--accent-primary);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.sidebar-project-menu-sep {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--border-subtle);
+}
+
+.sidebar-project-menu-add {
+  color: var(--text-tertiary);
+}
+
+.sidebar-project-menu-empty {
+  padding: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---- Agent view: default-agent controls + running-agents list ---- */
+/* The controls card sits at the top of this view (not a footer), with the
+   selector and a full-width Start stacked for breathing room. */
+.sidebar-view-agent .sidebar-agent-footer {
+  margin-top: 0;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  gap: var(--space-sm);
+}
+
+.sidebar-view-agent .sidebar-agent-footer-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-sm);
+}
+
+.sidebar-view-agent .sidebar-agent-footer-row .ai-tool-select {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.sidebar-view-agent .sidebar-agent-launch {
+  width: 100%;
+  justify-content: center;
+  padding: 8px;
+}
+
+.agent-running-header {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: var(--space-sm);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  /* Match the Home/Frames right-panel section titles — readable in dark mode. */
+  color: var(--text-secondary);
+}
+
+/* Header help (i) — distinct class from the per-row .agent-running-info
+   wrapper (which is flex:1 and would otherwise shove this to the right). */
+.agent-running-help {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  /* Same colour as the heading text it sits beside. */
+  color: inherit;
+  cursor: help;
+  transition: color var(--transition-fast);
+}
+
+.agent-running-help:hover {
+  color: var(--text-primary);
+}
+
+.agent-running-help-tip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  padding: 7px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+.agent-running-help:hover ~ .agent-running-help-tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.agent-running-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Agents grouped under their project heading. */
+.agent-running-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agent-running-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.agent-running-group-icon {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.agent-running-group-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-running-empty {
+  padding: var(--space-md) var(--space-sm);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.agent-running-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.agent-running-item:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-hover);
+}
+
+.agent-running-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+
+.agent-running-dot.working {
+  background: var(--accent-primary);
+  animation: spec-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.agent-running-dot.approval {
+  background: var(--error, #d45555);
+  animation: spec-dot-pulse 0.7s ease-in-out infinite;
+}
+
+.agent-running-dot.input {
+  background: var(--warning, #e5a50a);
+}
+
+.agent-running-dot.ready {
+  background: var(--success, #7cb382);
+}
+
+.agent-running-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.agent-running-name {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-running-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-running-status {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.agent-running-status.working {
+  color: var(--accent-primary);
+}
+
+.agent-running-status.approval {
+  color: var(--error, #d45555);
+}
+
+.agent-running-status.input {
+  color: var(--warning, #e5a50a);
+}
+
+/* ---- Projects view: full list that scrolls, with a pinned Add button ---- */
+.sidebar-view-projects {
+  overflow: hidden; /* the inner list scrolls; the Add button stays pinned */
+}
+
+.sidebar-view-projects #project-section {
+  /* Size to content so the Add button sits right where the list ends; shrink
+     + scroll only when the list is long enough to fill the view. */
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-bottom: none;
+}
+
+.sidebar-view-projects .project-section-list {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
+/* Primary CTA — accent-filled, sits just below the project list (Frame's
+   primary colour, matching the Agent Start button / FRAME tag). */
+.project-add-btn {
+  flex: 0 0 auto;
+  margin-top: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px var(--space-sm);
+  background: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  color: var(--bg-deep);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--transition-fast), transform 0.08s, box-shadow var(--transition-fast);
+}
+
+.project-add-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: var(--shadow-sm);
+}
+
+.project-add-btn:active {
+  transform: scale(0.99);
+}
+
+.project-add-btn-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 /* Files tab empty state */
@@ -291,22 +862,6 @@ body.sidebar-resizing * {
   margin-bottom: var(--space-lg);
 }
 
-/* File Explorer Header */
-.file-explorer-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: var(--space-lg) 0 var(--space-sm) 0;
-}
-
-.file-explorer-title span {
-  color: var(--text-tertiary);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
 #file-tree {
   flex: 1;
   overflow-y: auto;
@@ -347,12 +902,12 @@ body.sidebar-resizing * {
 }
 
 .project-item {
-  padding: var(--space-sm) var(--space-md);
+  padding: 9px var(--space-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   border-radius: var(--radius-md);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   color: var(--text-secondary);
   transition: all var(--transition-fast);
   border: 1px solid transparent;

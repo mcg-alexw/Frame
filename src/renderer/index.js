@@ -8,7 +8,7 @@ const { IPC } = require('../shared/ipcChannels');
 const terminal = require('./terminal');
 const fileTreeUI = require('./fileTreeUI');
 const gitChangesPanel = require('./gitChangesPanel');
-const diffViewer = require('./diffViewer');
+const diffSection = require('./diffSection');
 const historyPanel = require('./historyPanel');
 const tasksPanel = require('./tasksPanel');
 const tasksDashboard = require('./tasksDashboard');
@@ -23,6 +23,10 @@ const specPanelResize = require('./specPanelResize');
 const specsDashboard = require('./specsDashboard');
 const state = require('./state');
 const projectListUI = require('./projectListUI');
+const openProjectModal = require('./openProjectModal');
+const projectSection = require('./projectSection');
+const projectStatusBadges = require('./projectStatusBadges');
+const agentPanel = require('./agentPanel');
 const editor = require('./editor');
 const sidebarResize = require('./sidebarResize');
 const aiToolSelector = require('./aiToolSelector');
@@ -49,7 +53,6 @@ function init() {
 
   // Initialize state management
   state.init({
-    pathElement: document.getElementById('project-path'),
     startClaudeBtn: document.getElementById('btn-start-ai'),
     fileExplorerHeader: document.getElementById('file-explorer-header'),
     initializeFrameBtn: document.getElementById('btn-initialize-frame')
@@ -71,19 +74,23 @@ function init() {
   // Load projects from workspace
   projectListUI.loadProjects();
 
+  // Surface background-project agent activity (needs-approval / waiting-for-input)
+  // as badges on the project rows.
+  projectStatusBadges.init(multiTerminalUI);
+
+  // Agent rail view: live list of running agents across all projects.
+  agentPanel.init(multiTerminalUI);
+
   // Initialize file tree UI
   fileTreeUI.init('file-tree', state.getProjectPath);
   fileTreeUI.setProjectPathGetter(state.getProjectPath);
 
-  // Initialize Diff Viewer overlay (read-only, opened from Changes panel)
-  diffViewer.init();
-
-  // Initialize Git Changes panel (Changes sidebar tab); row clicks open the
-  // diff viewer for that file.
+  // Git Changes panel (Changes sidebar tab); a row click opens that file's
+  // diff as a section tab (next to Home / Frames), navigable with ◀ / ▶.
   gitChangesPanel.init({
     onRowClick: ({ projectPath, relPath, staged }) => {
       if (!projectPath || !relPath) return;
-      diffViewer.open({ projectPath, relPath, staged });
+      diffSection.open({ projectPath, relPath, staged });
     }
   });
 
@@ -177,6 +184,12 @@ function init() {
     tasksPanel.loadTasks();
   });
 
+  // Initialize the Open Project modal (shell over the existing open flows)
+  openProjectModal.init();
+
+  // Initialize the pinned Projects section (root-level project switcher)
+  projectSection.init();
+
   // Setup button handlers
   setupButtonHandlers();
 
@@ -205,53 +218,19 @@ function init() {
  * Setup button click handlers
  */
 function setupButtonHandlers() {
-  // Select project folder
-  document.getElementById('btn-select-project').addEventListener('click', () => {
-    state.selectProjectFolder();
-  });
-
-  // Create new project
-  document.getElementById('btn-create-project').addEventListener('click', () => {
-    state.createNewProject();
-  });
-
-  // Clone GitHub repo
-  const cloneInputRow = document.getElementById('clone-github-input-row');
-  const cloneUrlInput = document.getElementById('clone-github-url');
-
-  document.getElementById('btn-clone-github').addEventListener('click', () => {
-    cloneInputRow.style.display = 'flex';
-    cloneUrlInput.focus();
-  });
-
-  document.getElementById('btn-clone-github-cancel').addEventListener('click', () => {
-    cloneInputRow.style.display = 'none';
-    cloneUrlInput.value = '';
-  });
-
-  document.getElementById('btn-clone-github-confirm').addEventListener('click', () => {
-    const url = cloneUrlInput.value.trim();
-    if (!url) return;
-    cloneInputRow.style.display = 'none';
-    cloneUrlInput.value = '';
-    ipcRenderer.send(IPC.CLONE_GITHUB_REPO, url);
-  });
-
-  cloneUrlInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      document.getElementById('btn-clone-github-confirm').click();
-    } else if (e.key === 'Escape') {
-      document.getElementById('btn-clone-github-cancel').click();
-    }
-  });
-
+  // Clone GitHub result. The clone request is sent from the Open Project modal
+  // (openProjectModal.js); here we just route the result back to it: on success
+  // open the project + close the modal, on failure show the error inline (or a
+  // dialog if the modal isn't open).
   ipcRenderer.on(IPC.CLONE_GITHUB_REPO_RESULT, (event, result) => {
     if (result.cancelled) return;
-    if (!result.success) {
-      alert('Clone failed:\n' + result.error);
+    if (result.success) {
+      state.setProjectPath(result.projectPath);
+      openProjectModal.handleCloneResult(result);
       return;
     }
-    state.setProjectPath(result.projectPath);
+    const consumed = openProjectModal.handleCloneResult(result);
+    if (!consumed) alert('Clone failed:\n' + result.error);
   });
 
   // Start AI Tool (Claude Code / Codex CLI / etc.)
@@ -274,6 +253,13 @@ function setupButtonHandlers() {
     }
   });
 
+  // Sidebar "Start default agent" shortcut — context decides whether it
+  // starts in the focused Frame, a new Frame, or after a kill-and-restart
+  // prompt (see agentDispatch.startDefaultAgent).
+  document.getElementById('sidebar-agent-launch').addEventListener('click', () => {
+    require('./agentDispatch').startDefaultAgent();
+  });
+
   // Refresh file tree
   document.getElementById('btn-refresh-tree').addEventListener('click', () => {
     fileTreeUI.refreshFileTree();
@@ -284,28 +270,114 @@ function setupButtonHandlers() {
     historyPanel.toggleHistoryPanel();
   });
 
-  // Add project to workspace
-  document.getElementById('btn-add-project').addEventListener('click', () => {
-    state.selectProjectFolder();
-  });
-
   // Initialize as Frame project
   document.getElementById('btn-initialize-frame').addEventListener('click', () => {
     state.initializeAsFrameProject();
   });
 
-  // Sidebar tabs
+  // Sidebar activity rail (Projects / Files / Changes). Bound to the button,
+  // not e.target — clicks land on the inner SVG/path otherwise.
   document.querySelectorAll('.sidebar-tab-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const tab = e.target.dataset.sidebarTab;
-      document.querySelectorAll('.sidebar-tab-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.sidebarTab === tab);
+    btn.addEventListener('click', () => revealSidebarTab(btn.dataset.sidebarTab));
+  });
+
+  // Current-project switcher (Files / Changes views): reflects the active
+  // project and opens a dropdown to switch project without leaving the view.
+  const currentProjectNameEl = document.getElementById('sidebar-current-project-name');
+  const renderCurrentProject = () => {
+    if (!currentProjectNameEl) return;
+    const path = state.getProjectPath();
+    const name = path ? (path.split('/').pop() || path.split('\\').pop()) : null;
+    currentProjectNameEl.textContent = name || 'No project';
+  };
+  state.onProjectChange(renderCurrentProject);
+  renderCurrentProject();
+  setupProjectSwitcher();
+}
+
+/**
+ * Wire the current-project dropdown: build the project list on open, switch on
+ * select (reuses projectListUI.selectProject, the same path as clicking a row),
+ * and close on outside click / Escape.
+ */
+function setupProjectSwitcher() {
+  const btn = document.getElementById('sidebar-current-project');
+  const menu = document.getElementById('sidebar-project-menu');
+  if (!btn || !menu) return;
+
+  const CHECK = '<svg class="sidebar-project-menu-item-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  const close = () => {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', onDocClick, true);
+    document.removeEventListener('keydown', onKeydown, true);
+  };
+
+  const onDocClick = (e) => {
+    if (!menu.contains(e.target) && !btn.contains(e.target)) close();
+  };
+  const onKeydown = (e) => {
+    if (e.key === 'Escape') close();
+  };
+
+  const open = () => {
+    const projects = projectListUI.getProjects();
+    const active = projectListUI.getActiveProject();
+    menu.innerHTML = '';
+
+    if (!projects.length) {
+      const empty = document.createElement('div');
+      empty.className = 'sidebar-project-menu-empty';
+      empty.textContent = 'No projects yet';
+      menu.appendChild(empty);
+    } else {
+      projects.forEach((p) => {
+        const isActive = p.path === active;
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'sidebar-project-menu-item' + (isActive ? ' active' : '');
+        item.setAttribute('role', 'menuitem');
+        item.innerHTML = '<span class="sidebar-project-menu-item-name"></span>'
+          + (p.isFrameProject ? '<span class="sidebar-project-menu-tag">Frame</span>' : '')
+          + (isActive ? CHECK : '');
+        item.querySelector('.sidebar-project-menu-item-name').textContent = p.name;
+        item.addEventListener('click', () => {
+          close();
+          if (!isActive) projectListUI.selectProject(p.path);
+        });
+        menu.appendChild(item);
       });
-      document.querySelectorAll('[data-sidebar-tab-content]').forEach(el => {
-        el.style.display = el.dataset.sidebarTabContent === tab ? '' : 'none';
-      });
-      if (tab === 'changes') ipcRenderer.send(IPC.REFRESH_GIT_STATUS);
+    }
+
+    const sep = document.createElement('div');
+    sep.className = 'sidebar-project-menu-sep';
+    menu.appendChild(sep);
+
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'sidebar-project-menu-item sidebar-project-menu-add';
+    add.setAttribute('role', 'menuitem');
+    add.innerHTML = '<span class="sidebar-project-menu-item-name">+ Open a project…</span>';
+    add.addEventListener('click', () => {
+      close();
+      openProjectModal.open();
     });
+    menu.appendChild(add);
+
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    // Defer so this opening click doesn't immediately close via the doc listener.
+    setTimeout(() => {
+      document.addEventListener('click', onDocClick, true);
+      document.addEventListener('keydown', onKeydown, true);
+    }, 0);
+  };
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (menu.hidden) open(); else close();
   });
 }
 
@@ -359,7 +431,14 @@ function revealSidebarTab(tabName) {
   document.querySelectorAll('[data-sidebar-tab-content]').forEach((el) => {
     el.style.display = el.dataset.sidebarTabContent === tabName ? '' : 'none';
   });
+  // The current-project switcher shows (and changes) the active project for
+  // Files / Changes and the Agent view's Start target. It's hidden only on
+  // Projects, which highlights its own active row. (The Agent view's Running
+  // Agents list stays cross-project regardless of this selection.)
+  const cp = document.getElementById('sidebar-current-project-wrap');
+  if (cp) cp.style.display = tabName === 'projects' ? 'none' : '';
   if (tabName === 'changes') ipcRenderer.send(IPC.REFRESH_GIT_STATUS);
+  if (tabName === 'agent') agentPanel.recompute();
 }
 
 /**
@@ -492,9 +571,10 @@ function registerCommands() {
     category: 'Focus',
     shortcut: 'CmdOrCtrl+E',
     run: () => {
+      // Projects is its own rail view now — reveal it, then focus the list.
       revealSidebarTab('projects');
       fileTreeUI.blur();
-      projectListUI.focus();
+      projectSection.focusList();
     }
   });
   r({
@@ -528,13 +608,13 @@ function registerCommands() {
     id: 'project.add',
     title: 'Add Project to Workspace…',
     category: 'Project',
-    run: () => state.selectProjectFolder()
+    run: () => openProjectModal.open()
   });
   r({
     id: 'project.create',
     title: 'Create New Project…',
     category: 'Project',
-    run: () => state.createNewProject()
+    run: () => openProjectModal.open()
   });
   r({
     id: 'project.initializeFrame',
