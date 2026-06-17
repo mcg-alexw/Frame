@@ -105,13 +105,21 @@ The conductor doesn't guess at safety. Before running anything it reads each spe
 
 The unit of parallelism is the **spec**, not the task. A spec's own tasks are interdependent, so one agent runs them in order; *different* specs are the independent units that fan out. Need more parallelism? Split the work into more specs.
 
+When you dispatch a spec, Frame sets up its sandbox automatically — you don't run a single git command:
+
+- a fresh **git worktree** at `.frame/worktrees/<slug>`, branched from current `HEAD` (so serialized specs build on already-merged work),
+- a dedicated **work branch** `frame/<slug>/work`,
+- a worker **frame** (terminal) launched in that worktree, with the agent started and the spec's prompt injected.
+
+Every worker carries a live **state** you watch on the pipeline rail: `queued → running → done → approved`, with `blocked` (footprint conflict — held until its predecessor merges), `idle`, and `failed` surfaced too. Each worker is a real frame — click it to drop into its terminal, answer an approval prompt, or take over by hand. When you tear a session down, Frame removes the worktrees and prunes merged branches but **keeps un-merged work** on its branch, so nothing is lost.
+
 You stay in control of what lands:
 
 - Workers commit only to their own branch — they never push, never merge, never touch shared files (`tasks.json`, `STRUCTURE.json`, …).
 - When a worker finishes, the conductor reviews it and tells you it's ready — it does **not** merge on its own.
 - You review (you can test right in the worktree), then **Approve**. Frame runs a **drift check** — what the agent *actually* changed vs. what it *declared* — and merges locally into a per-spec integration branch. `main` is never touched; promoting it or opening a PR stays your call.
 
-The Orchestrator is a live cockpit: a pipeline rail showing every worker's state at a glance, plus worker lanes you can drop into — because no real task finishes in one shot, and an agent may need your approval mid-run.
+It all lives on one screen: the **conductor's terminal** (talk to it directly), the **pipeline rail** across the top, your **worker lanes**, and the **spec rail** to assign more — a cockpit, not a black box. Because no real task finishes in one shot and an agent may need your approval mid-run, you can always step into any frame and keep working by hand.
 
 > **Honest framing:** this is *guardrailed, human-steered* parallelism — not fire-and-forget automation. The conductor proposes and isolates; you decide what merges. That's the point.
 
