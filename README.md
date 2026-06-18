@@ -16,7 +16,15 @@
   <a href="https://github.com/kaanozhan/Frame/stargazers"><img src="https://img.shields.io/github/stars/kaanozhan/Frame?style=social" alt="Stars"></a>
 </p>
 
-Frame started as a lightweight terminal-first IDE. It's evolving into a full platform for developing and managing larger projects with AI agents — bringing structure, context, and organization to the way you work with Claude Code, Codex CLI, and Gemini CLI.
+The shape of software development changed — agents write the code now — but
+the foundation didn't: good results still come from good planning. Frame puts
+planning back at the center. You write a spec once, and that single spec
+becomes three things at once: the plan your agents follow, a clean unit of work
+you can run in parallel without collisions, and the durable, shared context
+your project keeps across every session. No more re-explaining your
+architecture every time you open a terminal.
+
+Works with Claude Code, Codex CLI, and Gemini CLI.
 
 https://github.com/user-attachments/assets/6fe108d1-70c8-441e-a913-b34583c803b0
 
