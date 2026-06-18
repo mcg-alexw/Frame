@@ -1005,6 +1005,7 @@
 
       <div class="nav-links">
         <a href="#features">Features</a>
+        <a href="#orchestration">Orchestration</a>
         <a href="#showcase">Showcase</a>
         <a href="#faq">FAQ</a>
         <a href="/blog/">Blog</a>
@@ -1180,6 +1181,37 @@
             Switch between Claude Code, Codex CLI, and Gemini CLI with a single click. Use the best AI tool for each task.
           </p>
         </div>
+
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Spec-Driven Development</h3>
+          <p class="feature-description">
+            Plan features that won't fit in one session as spec → plan → tasks → outcome markdown. The AI drafts, breaks down, and implements — then writes back what actually shipped, so context survives the session.
+          </p>
+        </div>
+
+        <div class="feature-card fade-in">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="6" cy="6" r="3"/>
+              <circle cx="6" cy="18" r="3"/>
+              <path d="M6 9v6"/>
+              <circle cx="18" cy="8" r="3"/>
+              <path d="M18 11a6 6 0 0 1-6 6H9"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Agent Orchestration</h3>
+          <p class="feature-description">
+            Run several specs in parallel — a conductor agent dispatches each to its own isolated git worktree, with a code-enforced conflict guard. You review and approve; nothing merges into your code without you.
+          </p>
+        </div>
       </div>
 
       <div class="features-cta fade-in" style="text-align: center; margin-top: 64px;">
@@ -1193,6 +1225,37 @@
             <polyline points="12 5 19 12 12 19"/>
           </svg>
         </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Spec-driven + Orchestration together -->
+  <section class="features" id="orchestration">
+    <div class="container">
+      <div class="section-label fade-in">Spec-driven + Orchestration</div>
+      <h2 class="section-title fade-in">Plan big work.<br>Run it in parallel.</h2>
+      <p class="section-subtitle fade-in">
+        Spec-driven development and orchestration are built to work together: describe a feature, let the AI turn it into a spec, then run many specs at once — safely, with you in control.
+      </p>
+      <div class="features-grid" style="margin-top: 48px;">
+        <div class="feature-card fade-in">
+          <h3 class="feature-title">1 · Describe</h3>
+          <p class="feature-description">
+            Say what you want. The AI drafts the spec, plans it, and breaks it into tasks — each tagged back to its spec.
+          </p>
+        </div>
+        <div class="feature-card fade-in">
+          <h3 class="feature-title">2 · Dispatch in parallel</h3>
+          <p class="feature-description">
+            Hand the ready specs to a conductor agent. It checks each spec's file footprint and runs the non-conflicting ones at the same time — every worker isolated in its own git worktree.
+          </p>
+        </div>
+        <div class="feature-card fade-in">
+          <h3 class="feature-title">3 · Review &amp; approve</h3>
+          <p class="feature-description">
+            Watch every worker's state on a live pipeline, drop into any agent's terminal, then approve. Frame drift-checks and merges locally — your <code>main</code> is never touched without you.
+          </p>
+        </div>
       </div>
     </div>
   </section>
