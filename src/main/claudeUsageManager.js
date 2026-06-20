@@ -4,6 +4,9 @@
  */
 
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const https = require('https');
 const { IPC } = require('../shared/ipcChannels');
 
@@ -22,23 +25,27 @@ function init(window) {
 }
 
 /**
- * Get OAuth token from macOS Keychain
+ * Get OAuth token from platform credential store
  * @returns {string|null} Access token or null if not found
  */
 function getOAuthToken() {
   try {
-    // macOS Keychain command
-    const result = execSync(
-      'security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null',
-      { encoding: 'utf8', timeout: 5000 }
-    ).trim();
+    let credentials;
 
-    if (!result) return null;
+    if (process.platform === 'win32') {
+      const credPath = path.join(os.homedir(), '.claude', '.credentials.json');
+      const raw = fs.readFileSync(credPath, 'utf8');
+      credentials = JSON.parse(raw);
+    } else {
+      // macOS Keychain
+      const result = execSync(
+        'security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null',
+        { encoding: 'utf8', timeout: 5000 }
+      ).trim();
+      if (!result) return null;
+      credentials = JSON.parse(result);
+    }
 
-    // Parse JSON to get the access token
-    const credentials = JSON.parse(result);
-
-    // Token can be in different locations depending on auth method
     if (credentials.claudeAiOauth?.accessToken) {
       return credentials.claudeAiOauth.accessToken;
     }
@@ -48,7 +55,6 @@ function getOAuthToken() {
 
     return null;
   } catch (err) {
-    // Token not found or parse error
     console.log('Claude usage: Could not get OAuth token:', err.message);
     return null;
   }

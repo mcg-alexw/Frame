@@ -16,6 +16,7 @@
     "prepare": "git config core.hooksPath .githooks || true",
     "dist": "npm run build && electron-builder --mac --dir",
     "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
     "dist:mac:unsigned": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac"
   },
   "keywords": [
@@ -29,8 +30,8 @@
   "author": "",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@electron/rebuild": "^3.6.0",
-    "electron": "^28.0.0",
+    "@electron/rebuild": "^4.0.4",
+    "electron": "^42.4.1",
     "electron-builder": "^26.7.0",
     "esbuild": "^0.27.2"
   },
@@ -85,5 +86,10 @@
       "!node_modules/**/test/**",
       "!node_modules/**/tests/**"
     ]
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true,
+    "esbuild@0.27.2": true,
+    "electron-winstaller@5.4.0": true
   }
 }

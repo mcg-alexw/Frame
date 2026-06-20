@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Auto-generated module structure",
-  "lastUpdated": "2026-06-18",
+  "lastUpdated": "2026-06-20",
   "architecture": {},
   "modules": {
     "main/aiToolManager": {
@@ -170,7 +170,7 @@
       }
     },
     "main/claudeUsageManager": {
-      "file": "src/main/claudeUsageManager.js",
+      "file": "src\\main\\claudeUsageManager.js",
       "description": "Claude Usage Manager Module",
       "exports": [
         "init",
@@ -182,49 +182,52 @@
       ],
       "depends": [
         "child_process",
+        "fs",
+        "path",
+        "os",
         "https",
         "shared/ipcChannels"
       ],
       "functions": {
         "init": {
-          "line": 18,
+          "line": 21,
           "params": [
             "window"
           ],
           "purpose": "Initialize the module with window reference"
         },
         "getOAuthToken": {
-          "line": 28,
-          "purpose": "Get OAuth token from macOS Keychain"
+          "line": 31,
+          "purpose": "Get OAuth token from platform credential store"
         },
         "fetchUsage": {
-          "line": 61,
+          "line": 67,
           "purpose": "Fetch usage data from Claude OAuth API"
         },
         "sendUsageToRenderer": {
-          "line": 165,
+          "line": 171,
           "purpose": "Send usage data to renderer"
         },
         "startPolling": {
-          "line": 176,
+          "line": 182,
           "params": [
             "interval = 300000"
           ],
           "purpose": "Start periodic polling for usage updates"
         },
         "stopPolling": {
-          "line": 194,
+          "line": 200,
           "purpose": "Stop polling"
         },
         "setupIPC": {
-          "line": 205,
+          "line": 211,
           "params": [
             "ipcMain"
           ],
           "purpose": "Setup IPC handlers"
         },
         "cleanup": {
-          "line": 222,
+          "line": 228,
           "purpose": "Cleanup on app quit"
         }
       },
@@ -5708,7 +5711,7 @@
       }
     },
     "renderer/terminalManager": {
-      "file": "src/renderer/terminalManager.js",
+      "file": "src\\renderer\\terminalManager.js",
       "description": "Terminal Manager Module",
       "exports": [
         "TerminalManager"
@@ -8228,7 +8231,7 @@
     "claude-usage": [
       {
         "module": "main/claudeUsageManager",
-        "file": "src/main/claudeUsageManager.js",
+        "file": "src\\main\\claudeUsageManager.js",
         "description": "Claude Usage Manager Module"
       }
     ],
@@ -8710,7 +8713,7 @@
       },
       {
         "module": "renderer/terminalManager",
-        "file": "src/renderer/terminalManager.js",
+        "file": "src\\renderer\\terminalManager.js",
         "description": "Terminal Manager Module"
       },
       {
