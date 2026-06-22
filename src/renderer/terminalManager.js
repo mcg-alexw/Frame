@@ -316,7 +316,7 @@ class TerminalManager {
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: 14,
-      fontFamily: 'Consolas, "Courier New", monospace',
+      fontFamily: '"Cascadia Mono PL", Consolas, "Courier New", monospace',
       theme: getTerminalTheme(),
       allowTransparency: false,
       scrollback: 10000,
