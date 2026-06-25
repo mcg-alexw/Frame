@@ -4,8 +4,8 @@
  */
 
 const { ipcRenderer, clipboard } = require('electron');
-const { Terminal } = require('xterm');
-const { FitAddon } = require('xterm-addon-fit');
+const { Terminal } = require('@xterm/xterm');
+const { FitAddon } = require('@xterm/addon-fit');
 const { IPC } = require('../shared/ipcChannels');
 
 // Terminal theme based on current app theme
@@ -316,7 +316,7 @@ class TerminalManager {
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: 14,
-      fontFamily: 'Consolas, "Courier New", monospace',
+      fontFamily: '"Cascadia Mono PL", Consolas, "Courier New", monospace',
       theme: getTerminalTheme(),
       allowTransparency: false,
       scrollback: 10000,

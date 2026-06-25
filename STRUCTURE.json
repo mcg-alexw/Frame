@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "description": "Auto-generated module structure",
-  "lastUpdated": "2026-06-24",
+  "lastUpdated": "2026-06-25",
   "architecture": {},
   "modules": {
     "main/aiToolManager": {
@@ -175,7 +175,7 @@
       }
     },
     "main/claudeUsageManager": {
-      "file": "src/main/claudeUsageManager.js",
+      "file": "src\\main\\claudeUsageManager.js",
       "description": "Claude Usage Manager Module",
       "exports": [
         "init",
@@ -187,49 +187,52 @@
       ],
       "depends": [
         "child_process",
+        "fs",
+        "path",
+        "os",
         "https",
         "shared/ipcChannels"
       ],
       "functions": {
         "init": {
-          "line": 18,
+          "line": 21,
           "params": [
             "window"
           ],
           "purpose": "Initialize the module with window reference"
         },
         "getOAuthToken": {
-          "line": 28,
-          "purpose": "Get OAuth token from macOS Keychain"
+          "line": 31,
+          "purpose": "Get OAuth token from platform credential store"
         },
         "fetchUsage": {
-          "line": 61,
+          "line": 69,
           "purpose": "Fetch usage data from Claude OAuth API"
         },
         "sendUsageToRenderer": {
-          "line": 165,
+          "line": 173,
           "purpose": "Send usage data to renderer"
         },
         "startPolling": {
-          "line": 176,
+          "line": 184,
           "params": [
             "interval = 300000"
           ],
           "purpose": "Start periodic polling for usage updates"
         },
         "stopPolling": {
-          "line": 194,
+          "line": 202,
           "purpose": "Stop polling"
         },
         "setupIPC": {
-          "line": 205,
+          "line": 213,
           "params": [
             "ipcMain"
           ],
           "purpose": "Setup IPC handlers"
         },
         "cleanup": {
-          "line": 222,
+          "line": 230,
           "purpose": "Cleanup on app quit"
         }
       },
@@ -961,7 +964,7 @@
       }
     },
     "main/index": {
-      "file": "src/main/index.js",
+      "file": "src\\main\\index.js",
       "description": "Main Process Entry Point",
       "exports": [
         "createWindow"
@@ -1001,15 +1004,15 @@
           "purpose": "Create main application window"
         },
         "setupAllIPC": {
-          "line": 94,
+          "line": 95,
           "purpose": "Setup all IPC handlers"
         },
         "init": {
-          "line": 144,
+          "line": 145,
           "purpose": "Initialize application"
         },
         "initModulesWithWindow": {
-          "line": 163,
+          "line": 164,
           "params": [
             "window"
           ],
@@ -5721,15 +5724,15 @@
       }
     },
     "renderer/terminalManager": {
-      "file": "src/renderer/terminalManager.js",
+      "file": "src\\renderer\\terminalManager.js",
       "description": "Terminal Manager Module",
       "exports": [
         "TerminalManager"
       ],
       "depends": [
         "electron",
-        "xterm",
-        "xterm-addon-fit",
+        "@xterm/xterm",
+        "@xterm/addon-fit",
         "shared/ipcChannels"
       ],
       "functions": {
@@ -8301,7 +8304,7 @@
     "claude-usage": [
       {
         "module": "main/claudeUsageManager",
-        "file": "src/main/claudeUsageManager.js",
+        "file": "src\\main\\claudeUsageManager.js",
         "description": "Claude Usage Manager Module"
       }
     ],
@@ -8445,7 +8448,7 @@
     "index": [
       {
         "module": "main/index",
-        "file": "src/main/index.js",
+        "file": "src\\main\\index.js",
         "description": "Main Process Entry Point"
       },
       {
@@ -8783,7 +8786,7 @@
       },
       {
         "module": "renderer/terminalManager",
-        "file": "src/renderer/terminalManager.js",
+        "file": "src\\renderer\\terminalManager.js",
         "description": "Terminal Manager Module"
       },
       {

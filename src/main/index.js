@@ -49,7 +49,8 @@ function createWindow() {
       contextIsolation: false
     },
     backgroundColor: '#1e1e1e',
-    title: 'Frame'
+    title: 'Frame',
+    icon: path.join(__dirname, '../../assets/logo.png')
   });
 
   mainWindow.loadFile('index.html');
