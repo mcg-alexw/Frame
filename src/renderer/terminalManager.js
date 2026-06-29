@@ -94,6 +94,30 @@ function installGlobalDropGuard() {
   window.addEventListener('drop', (e) => e.preventDefault());
 }
 
+// Shared off-screen container used to pre-open all terminals immediately on
+// creation. xterm.js only drains its write queue (and updates buffer.active)
+// after terminal.open() is called — so terminals that are never mounted to
+// the visible DOM (e.g. orchestration worker lanes spawned with enter:false)
+// end up with an empty buffer. laneStatus._readBufferTail() then always
+// returns '' and AGENT_PATTERNS never match, causing _waitForAgentReady to
+// time out after 15 seconds every time a worker is dispatched.
+//
+// By pre-opening every terminal into this hidden container we ensure the
+// write queue is live from the first PTY data chunk. mountTerminal() later
+// moves the element to the visible container (appendChild transfers ownership)
+// and calls fitAddon.fit() to resize; terminal.open() is not called again.
+let _offscreenEl = null;
+function getOffscreenContainer() {
+  if (!_offscreenEl) {
+    _offscreenEl = document.createElement('div');
+    _offscreenEl.style.cssText =
+      'position:fixed;top:-9999px;left:-9999px;width:640px;height:480px;' +
+      'visibility:hidden;pointer-events:none;overflow:hidden';
+    document.body.appendChild(_offscreenEl);
+  }
+  return _offscreenEl;
+}
+
 class TerminalManager {
   constructor() {
     this.terminals = new Map(); // Map<id, {terminal, fitAddon, element, state}>
@@ -352,6 +376,17 @@ class TerminalManager {
     };
 
     this.terminals.set(terminalId, { terminal, fitAddon, element, state });
+
+    // Pre-open into the shared off-screen container so xterm's write queue is
+    // active from the very first PTY data chunk. This is required for
+    // orchestration worker lanes (enter:false) that are never mounted to the
+    // visible DOM — without open() their buffer.active stays empty, laneStatus
+    // can't fingerprint the agent TUI, and _waitForAgentReady times out.
+    // closeTerminal() calls element.remove() which correctly detaches the
+    // element from whichever container it currently lives in.
+    getOffscreenContainer().appendChild(element);
+    terminal.open(element);
+    this.terminals.get(terminalId).opened = true;
 
     // Allow app-level shortcuts to pass through when terminal has focus
     terminal.attachCustomKeyEventHandler((event) => {

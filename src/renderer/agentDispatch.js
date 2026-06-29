@@ -536,7 +536,7 @@ function _escapeHtml(s) {
 
 // How long a cold-started CLI gets to reach its input box before the
 // dispatch aborts. Covers slow machines; a hung/failed launch fails loudly.
-const AGENT_READY_TIMEOUT_MS = 15000;
+const AGENT_READY_TIMEOUT_MS = 30000;
 
 // Cold-start readiness gate: resolves true once laneStatus sees a known
 // agent in the foreground settled at its input box ('agent-input'), false
