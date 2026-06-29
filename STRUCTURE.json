@@ -5731,8 +5731,8 @@
       ],
       "depends": [
         "electron",
-        "@xterm/xterm",
-        "@xterm/addon-fit",
+        "xterm",
+        "xterm-addon-fit",
         "shared/ipcChannels"
       ],
       "functions": {
